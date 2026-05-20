@@ -121,6 +121,9 @@ class GitHubConnector:
 
             username = parts[1]
             repo_name = parts[2]
+            # Strip .git suffix if present (e.g. https://github.com/user/repo.git)
+            if repo_name.endswith('.git'):
+                repo_name = repo_name[:-4]
             return self.g.get_repo(f"{username}/{repo_name}")
         except GithubException as e:
             logger.error(f"GitHub Error for URL {github_url}: {e}")

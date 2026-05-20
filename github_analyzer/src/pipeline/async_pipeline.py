@@ -168,9 +168,7 @@ class AsyncAnalysisPipeline:
                         "student_name":   student_name,
                         "github_link":    student.get("github link", ""),
                         "status":         "Failed",
-                        "positives":      str(e),
-                        "negatives":      "",
-                        "improvements":   "",
+                        "feedback":       str(e),
                         "repo_found":     "No",
                         "files_analyzed": 0,
                     })

@@ -271,14 +271,10 @@
         .files-popup li:hover { background: var(--surface2); }
         .files-popup li i { color: var(--accent); margin-right: 7px; font-size: 0.75rem; }
 
-        /* Feedback sections */
-        .feedback-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-        }
+        /* Feedback panel */
+        .feedback-panel { border-top: 1px solid var(--border); }
 
-        .feedback-section { padding: 20px 24px; border-right: 1px solid var(--border); }
-        .feedback-section:last-child { border-right: none; }
+        .feedback-section { padding: 20px 24px; }
 
         .feedback-section-title {
             display: flex;
@@ -306,9 +302,9 @@
         }
 
         .feedback-list li::before { content: '•'; position: absolute; left: 0; color: var(--muted); }
-        .feedback-section.positive .feedback-list li::before { color: var(--positive); }
-        .feedback-section.negative .feedback-list li::before { color: var(--negative); }
-        .feedback-section.improve  .feedback-list li::before { color: var(--improve); }
+        .feedback-list li.positive::before { color: var(--positive); }
+        .feedback-list li.negative::before { color: var(--negative); }
+        .feedback-list li.improve::before  { color: var(--improve); }
 
         .no-data   { color: var(--muted); font-size: 0.83rem; font-style: italic; }
         .failed-row { padding: 20px 24px; color: var(--muted); font-size: 0.9rem; }
@@ -334,9 +330,6 @@
         .btn-back:hover { border-color: var(--accent); color: var(--accent); box-shadow: 0 2px 8px rgba(108,99,255,0.15); }
 
         @media (max-width: 640px) {
-            .feedback-grid { grid-template-columns: 1fr; }
-            .feedback-section { border-right: none; border-bottom: 1px solid var(--border); }
-            .feedback-section:last-child { border-bottom: none; }
             .repo-meta-panel { padding: 12px 16px; }
         }
     </style>
@@ -514,49 +507,46 @@
                 {% endif %}
 
                 <!-- Feedback body -->
-                {% if result.positives or result.negatives or result.improvements %}
-                <div class="feedback-grid">
-                    <div class="feedback-section positive">
-                        <div class="feedback-section-title title-positive">
-                            <i class="fas fa-plus-circle"></i> Positives
-                        </div>
-                        {% if result.positives %}
-                        <ul class="feedback-list">
-                            {% for line in result.positives.split('\n') %}
-                            {% set clean = line.strip().lstrip('•-* ') %}
-                            {% if clean %}<li>{{ clean }}</li>{% endif %}
-                            {% endfor %}
-                        </ul>
-                        {% else %}<p class="no-data">None identified</p>{% endif %}
-                    </div>
-
-                    <div class="feedback-section negative">
-                        <div class="feedback-section-title title-negative">
-                            <i class="fas fa-minus-circle"></i> Negatives
-                        </div>
-                        {% if result.negatives %}
-                        <ul class="feedback-list">
-                            {% for line in result.negatives.split('\n') %}
-                            {% set clean = line.strip().lstrip('•-* ') %}
-                            {% if clean %}<li>{{ clean }}</li>{% endif %}
-                            {% endfor %}
-                        </ul>
-                        {% else %}<p class="no-data">None identified</p>{% endif %}
-                    </div>
-
-                    <div class="feedback-section improve">
-                        <div class="feedback-section-title title-improve">
-                            <i class="fas fa-lightbulb"></i> Improvements
-                        </div>
-                        {% if result.improvements %}
-                        <ul class="feedback-list">
-                            {% for line in result.improvements.split('\n') %}
-                            {% set clean = line.strip().lstrip('•-* ') %}
-                            {% if clean %}<li>{{ clean }}</li>{% endif %}
-                            {% endfor %}
-                        </ul>
-                        {% else %}<p class="no-data">No suggestions</p>{% endif %}
-                    </div>
+                {% if result.feedback %}
+                <div class="feedback-panel" style="padding: 24px;">
+                    {% set feedback_lines = result.feedback.split('\n') %}
+                    {% set ns = namespace(current_section='') %}
+                    {% for line in feedback_lines %}
+                        {% set trimmed = line.strip() %}
+                        {% if trimmed.upper().startswith('POSITIVES:') %}
+                            {% set ns.current_section = 'positive' %}
+                            <div class="feedback-section-title title-positive" style="margin-top: 8px;">
+                                <i class="fas fa-plus-circle"></i> Positives
+                            </div>
+                            <ul class="feedback-list" style="margin-bottom: 18px;">
+                        {% elif trimmed.upper().startswith('NEGATIVES:') %}
+                            </ul>
+                            {% set ns.current_section = 'negative' %}
+                            <div class="feedback-section-title title-negative" style="margin-top: 8px;">
+                                <i class="fas fa-minus-circle"></i> Negatives
+                            </div>
+                            <ul class="feedback-list" style="margin-bottom: 18px;">
+                        {% elif trimmed.upper().startswith('IMPROVEMENTS:') %}
+                            </ul>
+                            {% set ns.current_section = 'improve' %}
+                            <div class="feedback-section-title title-improve" style="margin-top: 8px;">
+                                <i class="fas fa-lightbulb"></i> Improvements
+                            </div>
+                            <ul class="feedback-list" style="margin-bottom: 18px;">
+                        {% elif trimmed.upper().startswith('OVERALL RATING:') %}
+                            </ul>
+                            {% set ns.current_section = 'rating' %}
+                            <div style="margin-top: 12px; padding: 14px 20px; background: linear-gradient(135deg, #1a6b38, #3dbc5c); border-radius: 10px; display: inline-flex; align-items: center; gap: 10px;">
+                                <i class="fas fa-star" style="color: #fff; font-size: 1.1rem;"></i>
+                                <span style="color: #fff; font-weight: 700; font-size: 1.05rem;">{{ trimmed }}</span>
+                            </div>
+                        {% elif trimmed %}
+                            {% set clean = trimmed.lstrip('•-* ') %}
+                            {% if clean and ns.current_section in ['positive', 'negative', 'improve'] %}
+                                <li class="{{ ns.current_section }}">{{ clean }}</li>
+                            {% endif %}
+                        {% endif %}
+                    {% endfor %}
                 </div>
                 {% else %}
                 <div class="failed-row">

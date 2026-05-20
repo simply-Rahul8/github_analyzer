@@ -79,9 +79,10 @@ class LLMEngine:
         ctx = (
             user_context if user_context and user_context.strip()
             else (
-                "Evaluate this repository as a student or hackathon project. Focus on code readability, "
-                "logical organization, basic documentation, and core functionality. Do not penalize for "
-                "missing enterprise features."
+                "Evaluate this repository as a student hackathon or college project. "
+                "Focus on whether the core idea works, code readability, basic folder organization, "
+                "and whether the README explains the project. Do NOT penalize for missing tests, "
+                "CI/CD, deployment setup, or any professional/industry features."
             )
         )
 

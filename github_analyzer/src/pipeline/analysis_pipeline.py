@@ -44,9 +44,7 @@ class AnalysisPipeline:
             "files_list":     [],
             "repo_metadata":  {},
             "overall_rating": "",
-            "positives":      "",
-            "negatives":      "",
-            "improvements":   "",
+            "feedback":       "",
             "status":         "Failed"
         }
 
