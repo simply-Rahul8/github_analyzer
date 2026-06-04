@@ -8,7 +8,9 @@ logger = setup_logging()
 class ReportGenerator:
     def parse_llm_response(self, response_text):
         """
-        Parses the structured LLM response to extract POSITIVES, NEGATIVES, and IMPROVEMENTS.
+        Parses the structured LLM response and combines all sections
+        into a single 'feedback' string with Positives, Negatives,
+        Improvements, and Overall Rating sections.
         """
         header_pattern = re.compile(
             r"^[\#\*]*\s*(OVERALL RATING|POSITIVES|NEGATIVES|IMPROVEMENTS)[\s\:\*]*",
@@ -63,11 +65,33 @@ class ReportGenerator:
 
         for key in sections:
             sections[key] = sections[key].strip()
-        return sections
+
+        # Combine all sections into a single feedback string
+        feedback_parts = []
+
+        if sections["positives"]:
+            feedback_parts.append(f"POSITIVES:\n{sections['positives']}")
+
+        if sections["negatives"]:
+            feedback_parts.append(f"NEGATIVES:\n{sections['negatives']}")
+
+        if sections["improvements"]:
+            feedback_parts.append(f"IMPROVEMENTS:\n{sections['improvements']}")
+
+        if sections["overall_rating"]:
+            feedback_parts.append(f"OVERALL RATING: {sections['overall_rating']}")
+
+        feedback = "\n\n".join(feedback_parts)
+
+        return {
+            "feedback": feedback,
+            "overall_rating": sections["overall_rating"]
+        }
 
     def write_evaluation_file(self, results, output_file="evaluation.xlsx"):
         """
-        Writes the list of result dictionaries to an Excel file.
+        Writes the list of result dictionaries to an Excel file
+        with a single 'Feedback' column containing all evaluation sections.
         """
         try:
             column_mapping = {
@@ -75,10 +99,7 @@ class ReportGenerator:
                 "github_link": "GitHub Link",
                 "repo_found": "Repo Found",
                 "files_analyzed": "Files Analyzed",
-                "overall_rating": "Overall Rating",
-                "positives": "Positives",
-                "negatives": "Negatives",
-                "improvements": "Improvements"
+                "feedback": "Feedback"
             }
 
             df = pd.DataFrame(results)
