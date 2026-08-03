@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, flash, redirect, url_for, send_file
 import os
+from pathlib import Path
 from werkzeug.utils import secure_filename
 from datetime import datetime
 import tempfile
@@ -8,7 +9,20 @@ import io
 import sys
 
 # Load environment variables
-load_dotenv()
+
+def _load_app_env() -> None:
+    env_candidates = [
+        Path(__file__).resolve().parent / ".env",
+        Path(__file__).resolve().parent.parent / ".env",
+    ]
+    for env_path in env_candidates:
+        if env_path.exists():
+            load_dotenv(env_path, override=True)
+            return
+    load_dotenv(override=True)
+
+
+_load_app_env()
 
 # Import from src
 from src.constants import Config
@@ -67,13 +81,13 @@ def index():
             with open(questions_path, 'r', encoding='utf-8') as f:
                 questions_content = f.read()
 
+
             # Update configuration from form
             repo_keywords = request.form.get('repo_keywords', '').strip()
             if repo_keywords:
                 Config.REPO_KEYWORDS = [k.strip() for k in repo_keywords.split(',') if k.strip()]
             else:
                 Config.REPO_KEYWORDS = []  # Empty list means analyze any repository
-
 
             # Validate configuration
             Config.validate()

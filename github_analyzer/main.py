@@ -3,6 +3,7 @@ import os
 import shutil
 import uuid
 import logging
+from pathlib import Path
 from typing import List, Optional
 from fastapi import FastAPI, UploadFile, File, Form, Request, BackgroundTasks, HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse, FileResponse, Response
@@ -14,7 +15,21 @@ from src.logger.logging_config import setup_logging
 from src.constants import Config
 
 logger = setup_logging()
-load_dotenv()
+
+
+def _load_app_env() -> None:
+    env_candidates = [
+        Path(__file__).resolve().parent / ".env",
+        Path(__file__).resolve().parent.parent / ".env",
+    ]
+    for env_path in env_candidates:
+        if env_path.exists():
+            load_dotenv(env_path, override=True)
+            return
+    load_dotenv(override=True)
+
+
+_load_app_env()
 
 app = FastAPI(title="GitHub Repository Analyzer")
 
@@ -142,6 +157,7 @@ async def analyze(
     """
     Batch analysis: upload an Excel file with student names & GitHub links,
     plus optional user-provided evaluation context.
+    (Removed optional `repo_keywords` filtering from the home page.)
     """
     try:
         if not students_file.filename.endswith(('.xlsx', '.xls')):

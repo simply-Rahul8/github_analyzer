@@ -1,701 +1,861 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GitHub Repository Analyzer — AI-Powered Code Review for Any Repository</title>
-    <meta name="description"
-        content="Analyze any GitHub repository with AI — Python, JavaScript, Go, Rust, Java, and more. Get instant, evidence-based feedback on code quality, documentation, testing, and security.">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
-        rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>
+      GitHub Repository Analyzer — AI-Powered Code Review for Any Repository
+    </title>
+    <meta
+      name="description"
+      content="Analyze any GitHub repository with AI — Python, JavaScript, Go, Rust, Java, and more. Get instant, evidence-based feedback on code quality, documentation, testing, and security."
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+      rel="stylesheet"
+    />
     <style>
-        *,
-        *::before,
-        *::after {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      :root {
+        --hero-from: #4c5ecf;
+        --hero-to: #8b42c8;
+        --accent: #5b6dd4;
+        --accent-dark: #3b4baf;
+        --accent-light: #7b88e8;
+        --bg: #f5f7fa;
+        --surface: #ffffff;
+        --border: #dde1ec;
+        --text: #1c1c2e;
+        --muted: #6b7280;
+        --radius: 16px;
+      }
+
+      body {
+        font-family: "Inter", sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        min-height: 100vh;
+      }
+
+      /* ── NAVBAR ── */
+      nav {
+        background: var(--surface);
+        border-bottom: 1px solid var(--border);
+        padding: 0 40px;
+        height: 64px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        box-shadow: 0 1px 12px rgba(0, 0, 0, 0.07);
+      }
+
+      .nav-logo {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 1.1rem;
+        font-weight: 800;
+        color: var(--text);
+        text-decoration: none;
+      }
+
+      .nav-logo .logo-icon {
+        width: 34px;
+        height: 34px;
+        background: linear-gradient(135deg, var(--hero-from), var(--hero-to));
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        font-size: 0.95rem;
+      }
+
+      .nav-logo span span {
+        color: var(--accent);
+      }
+
+      .nav-pills {
+        display: flex;
+        gap: 6px;
+      }
+
+      .nav-pill {
+        padding: 6px 16px;
+        border-radius: 8px;
+        font-size: 0.84rem;
+        font-weight: 500;
+        color: var(--muted);
+        border: none;
+        background: transparent;
+        cursor: pointer;
+        transition:
+          background 0.15s,
+          color 0.15s;
+      }
+
+      .nav-pill:hover,
+      .nav-pill.active {
+        background: #eef0ff;
+        color: var(--accent);
+      }
+
+      /* ── HERO ── */
+      .hero {
+        background: linear-gradient(
+          135deg,
+          var(--hero-from) 0%,
+          var(--hero-to) 100%
+        );
+        padding: 72px 24px 100px;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .hero::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+      }
+
+      .hero-eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: rgba(255, 255, 255, 0.18);
+        backdrop-filter: blur(8px);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        color: #fff;
+        padding: 6px 18px;
+        border-radius: 50px;
+        font-size: 0.78rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        margin-bottom: 28px;
+      }
+
+      .hero h1 {
+        font-size: clamp(2.2rem, 5vw, 3.8rem);
+        font-weight: 900;
+        color: #fff;
+        line-height: 1.12;
+        margin-bottom: 18px;
+        letter-spacing: -0.02em;
+      }
+
+      .hero h1 em {
+        font-style: normal;
+        opacity: 0.82;
+      }
+
+      .hero-sub {
+        font-size: 1.1rem;
+        color: rgba(255, 255, 255, 0.85);
+        max-width: 560px;
+        margin: 0 auto 42px;
+        line-height: 1.7;
+      }
+
+      /* Lang badges inside hero */
+      .lang-badges {
+        display: flex;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 36px;
+      }
+
+      .lang-badge {
+        background: rgba(255, 255, 255, 0.15);
+        backdrop-filter: blur(6px);
+        border: 1px solid rgba(255, 255, 255, 0.22);
+        color: #fff;
+        border-radius: 50px;
+        padding: 4px 14px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+      }
+
+      /* ── HOW IT WORKS ── */
+      .hero-steps {
+        display: flex;
+        justify-content: center;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+
+      .hero-step {
+        background: rgba(255, 255, 255, 0.15);
+        backdrop-filter: blur(8px);
+        border: 1px solid rgba(255, 255, 255, 0.25);
+        border-radius: 12px;
+        padding: 14px 22px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        color: #fff;
+        font-size: 0.9rem;
+      }
+
+      .step-num {
+        width: 28px;
+        height: 28px;
+        background: rgba(255, 255, 255, 0.25);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 800;
+        font-size: 0.82rem;
+        flex-shrink: 0;
+      }
+
+      /* ── FLOATING FORM CARD ── */
+      .form-wrap {
+        max-width: 780px;
+        margin: -52px auto 0;
+        padding: 0 20px 60px;
+        position: relative;
+        z-index: 2;
+      }
+
+      .form-card {
+        background: var(--surface);
+        border-radius: 20px;
+        box-shadow:
+          0 20px 60px rgba(76, 94, 207, 0.16),
+          0 4px 20px rgba(0, 0, 0, 0.08);
+        overflow: hidden;
+      }
+
+      /* Tab strip */
+      .form-tabs {
+        display: flex;
+        border-bottom: 1px solid var(--border);
+        background: #f8f9fc;
+      }
+
+      .form-tab {
+        flex: 1;
+        padding: 16px;
+        text-align: center;
+        font-size: 0.88rem;
+        font-weight: 600;
+        color: var(--muted);
+        cursor: pointer;
+        border: none;
+        background: transparent;
+        border-bottom: 3px solid transparent;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        transition:
+          color 0.2s,
+          border-color 0.2s;
+      }
+
+      .form-tab.active {
+        color: var(--accent-dark);
+        border-bottom-color: var(--accent);
+      }
+      .form-tab:hover:not(.active) {
+        color: var(--text);
+      }
+
+      .form-pane {
+        display: none;
+        padding: 36px;
+      }
+      .form-pane.active {
+        display: block;
+      }
+
+      /* Field styles */
+      .field-label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.8rem;
+        font-weight: 700;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.07em;
+        margin-bottom: 10px;
+      }
+
+      .field-label i {
+        color: var(--accent);
+      }
+
+      .url-input-wrap {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        background: #f8f9fc;
+        border: 1.5px solid var(--border);
+        border-radius: 12px;
+        padding: 10px 18px;
+        transition:
+          border-color 0.2s,
+          box-shadow 0.2s;
+      }
+
+      .url-input-wrap:focus-within {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px rgba(91, 109, 212, 0.12);
+      }
+
+      .url-input-wrap i {
+        color: var(--accent);
+        flex-shrink: 0;
+      }
+
+      .url-input-wrap input {
+        flex: 1;
+        border: none;
+        background: transparent;
+        font-family: "Inter", sans-serif;
+        font-size: 0.97rem;
+        color: var(--text);
+        outline: none;
+        padding: 4px 0;
+      }
+
+      .url-input-wrap input::placeholder {
+        color: #b0b7c3;
+      }
+
+      .field-gap {
+        margin-top: 24px;
+      }
+
+      textarea.context-area {
+        width: 100%;
+        background: #f8f9fc;
+        border: 1.5px solid var(--border);
+        border-radius: 12px;
+        color: var(--text);
+        font-family: "Inter", sans-serif;
+        font-size: 0.93rem;
+        padding: 14px 18px;
+        resize: vertical;
+        min-height: 128px;
+        outline: none;
+        line-height: 1.65;
+        transition:
+          border-color 0.2s,
+          box-shadow 0.2s;
+      }
+
+      textarea.context-area::placeholder {
+        color: #b0b7c3;
+      }
+
+      textarea.context-area:focus {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px rgba(91, 109, 212, 0.1);
+      }
+
+      .field-hint {
+        font-size: 0.78rem;
+        color: var(--muted);
+        margin-top: 8px;
+        display: flex;
+        align-items: flex-start;
+        gap: 6px;
+      }
+
+      /* Submit button */
+      .btn-submit {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        width: 100%;
+        margin-top: 28px;
+        padding: 16px;
+        border: none;
+        border-radius: 12px;
+        cursor: pointer;
+        font-family: "Inter", sans-serif;
+        font-size: 1rem;
+        font-weight: 700;
+        color: #fff;
+        background: linear-gradient(
+          135deg,
+          var(--hero-from) 0%,
+          var(--hero-to) 100%
+        );
+        box-shadow: 0 6px 24px rgba(76, 94, 207, 0.35);
+        transition:
+          transform 0.15s,
+          box-shadow 0.15s,
+          opacity 0.15s;
+        letter-spacing: 0.01em;
+      }
+
+      .btn-submit:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 32px rgba(76, 94, 207, 0.45);
+      }
+
+      .btn-submit:active {
+        transform: translateY(0);
+      }
+
+      .btn-batch-submit {
+        background: linear-gradient(135deg, #5b6dd4 0%, #8b42c8 100%);
+        box-shadow: 0 6px 24px rgba(91, 109, 212, 0.35);
+      }
+
+      .btn-batch-submit:hover {
+        box-shadow: 0 10px 32px rgba(91, 109, 212, 0.45);
+      }
+
+      /* Upload area */
+      .upload-zone {
+        border: 2px dashed var(--border);
+        border-radius: 12px;
+        padding: 30px;
+        text-align: center;
+        cursor: pointer;
+        transition:
+          border-color 0.2s,
+          background 0.2s;
+        position: relative;
+      }
+
+      .upload-zone:hover {
+        border-color: var(--accent);
+        background: #f0f2ff;
+      }
+      .upload-zone i {
+        font-size: 2.2rem;
+        color: var(--accent);
+        margin-bottom: 10px;
+        display: block;
+      }
+      .upload-zone .upload-label {
+        font-weight: 600;
+        font-size: 0.95rem;
+      }
+      .upload-zone .upload-hint {
+        font-size: 0.8rem;
+        color: var(--muted);
+        margin-top: 6px;
+      }
+
+      .upload-zone input[type="file"] {
+        position: absolute;
+        inset: 0;
+        opacity: 0;
+        cursor: pointer;
+        width: 100%;
+        height: 100%;
+      }
+
+      /* Error */
+      .alert-error {
+        background: #fef2f2;
+        border: 1px solid #fecaca;
+        color: #b91c1c;
+        border-radius: 10px;
+        padding: 14px 18px;
+        margin-bottom: 24px;
+        font-size: 0.88rem;
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+      }
+
+      /* ── FEATURES SECTION ── */
+      .features-section {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 0 20px 80px;
+      }
+
+      .features-section h2 {
+        text-align: center;
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: var(--text);
+        margin-bottom: 10px;
+      }
+
+      .features-section .section-sub {
+        text-align: center;
+        color: var(--muted);
+        font-size: 0.9rem;
+        margin-bottom: 36px;
+      }
+
+      .features-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+        gap: 18px;
+      }
+
+      .feature-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 28px 22px;
+        text-align: center;
+        transition:
+          transform 0.2s,
+          box-shadow 0.2s,
+          border-color 0.2s;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+      }
+
+      .feature-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 10px 28px rgba(76, 94, 207, 0.14);
+        border-color: #c5c8f0;
+      }
+
+      .feature-icon {
+        width: 52px;
+        height: 52px;
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.35rem;
+        margin: 0 auto 16px;
+      }
+
+      .fi-green {
+        background: #eef0ff;
+        color: var(--accent);
+      }
+      .fi-purple {
+        background: #f4eeff;
+        color: #8b42c8;
+      }
+      .fi-orange {
+        background: #fff7ed;
+        color: #c2410c;
+      }
+      .fi-blue {
+        background: #eff6ff;
+        color: #1d4ed8;
+      }
+      .fi-teal {
+        background: #f0fdfa;
+        color: #0d9488;
+      }
+      .fi-rose {
+        background: #fff1f2;
+        color: #e11d48;
+      }
+
+      .feature-card h3 {
+        font-size: 0.95rem;
+        font-weight: 700;
+        margin-bottom: 8px;
+      }
+      .feature-card p {
+        font-size: 0.82rem;
+        color: var(--muted);
+        line-height: 1.6;
+      }
+
+      /* ── FOOTER ── */
+      footer {
+        text-align: center;
+        padding: 28px;
+        font-size: 0.78rem;
+        color: var(--muted);
+        border-top: 1px solid var(--border);
+        background: var(--surface);
+      }
+
+      /* ── LOADER ── */
+      #loader {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(255, 255, 255, 0.82);
+        z-index: 999;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        gap: 18px;
+        backdrop-filter: blur(4px);
+      }
+
+      .loader-ring {
+        width: 56px;
+        height: 56px;
+        border: 4px solid var(--border);
+        border-top-color: var(--accent);
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+      }
+
+      .loader-text {
+        font-weight: 600;
+        color: var(--text);
+        font-size: 0.95rem;
+      }
+
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
         }
-
-        :root {
-            --hero-from: #4c5ecf;
-            --hero-to: #8b42c8;
-            --accent: #5b6dd4;
-            --accent-dark: #3b4baf;
-            --accent-light: #7b88e8;
-            --bg: #f5f7fa;
-            --surface: #ffffff;
-            --border: #dde1ec;
-            --text: #1c1c2e;
-            --muted: #6b7280;
-            --radius: 16px;
-        }
-
-        body {
-            font-family: 'Inter', sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            min-height: 100vh;
-        }
-
-        /* ── NAVBAR ── */
-        nav {
-            background: var(--surface);
-            border-bottom: 1px solid var(--border);
-            padding: 0 40px;
-            height: 64px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            box-shadow: 0 1px 12px rgba(0, 0, 0, 0.07);
-        }
-
-        .nav-logo {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-size: 1.1rem;
-            font-weight: 800;
-            color: var(--text);
-            text-decoration: none;
-        }
-
-        .nav-logo .logo-icon {
-            width: 34px;
-            height: 34px;
-            background: linear-gradient(135deg, var(--hero-from), var(--hero-to));
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #fff;
-            font-size: 0.95rem;
-        }
-
-        .nav-logo span span { color: var(--accent); }
-
-        .nav-pills { display: flex; gap: 6px; }
-
-        .nav-pill {
-            padding: 6px 16px;
-            border-radius: 8px;
-            font-size: 0.84rem;
-            font-weight: 500;
-            color: var(--muted);
-            border: none;
-            background: transparent;
-            cursor: pointer;
-            transition: background 0.15s, color 0.15s;
-        }
-
-        .nav-pill:hover, .nav-pill.active {
-            background: #eef0ff;
-            color: var(--accent);
-        }
-
-        /* ── HERO ── */
-        .hero {
-            background: linear-gradient(135deg, var(--hero-from) 0%, var(--hero-to) 100%);
-            padding: 72px 24px 100px;
-            text-align: center;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .hero::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
-        }
-
-        .hero-eyebrow {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            background: rgba(255, 255, 255, 0.18);
-            backdrop-filter: blur(8px);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            color: #fff;
-            padding: 6px 18px;
-            border-radius: 50px;
-            font-size: 0.78rem;
-            font-weight: 700;
-            letter-spacing: 0.08em;
-            text-transform: uppercase;
-            margin-bottom: 28px;
-        }
-
-        .hero h1 {
-            font-size: clamp(2.2rem, 5vw, 3.8rem);
-            font-weight: 900;
-            color: #fff;
-            line-height: 1.12;
-            margin-bottom: 18px;
-            letter-spacing: -0.02em;
-        }
-
-        .hero h1 em { font-style: normal; opacity: 0.82; }
-
-        .hero-sub {
-            font-size: 1.1rem;
-            color: rgba(255, 255, 255, 0.85);
-            max-width: 560px;
-            margin: 0 auto 42px;
-            line-height: 1.7;
-        }
-
-        /* Lang badges inside hero */
-        .lang-badges {
-            display: flex;
-            justify-content: center;
-            flex-wrap: wrap;
-            gap: 8px;
-            margin-bottom: 36px;
-        }
-
-        .lang-badge {
-            background: rgba(255,255,255,0.15);
-            backdrop-filter: blur(6px);
-            border: 1px solid rgba(255,255,255,0.22);
-            color: #fff;
-            border-radius: 50px;
-            padding: 4px 14px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            letter-spacing: 0.04em;
-        }
-
-        /* ── HOW IT WORKS ── */
-        .hero-steps {
-            display: flex;
-            justify-content: center;
-            gap: 12px;
-            flex-wrap: wrap;
-        }
-
-        .hero-step {
-            background: rgba(255, 255, 255, 0.15);
-            backdrop-filter: blur(8px);
-            border: 1px solid rgba(255, 255, 255, 0.25);
-            border-radius: 12px;
-            padding: 14px 22px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            color: #fff;
-            font-size: 0.9rem;
-        }
-
-        .step-num {
-            width: 28px;
-            height: 28px;
-            background: rgba(255, 255, 255, 0.25);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 800;
-            font-size: 0.82rem;
-            flex-shrink: 0;
-        }
-
-        /* ── FLOATING FORM CARD ── */
-        .form-wrap {
-            max-width: 780px;
-            margin: -52px auto 0;
-            padding: 0 20px 60px;
-            position: relative;
-            z-index: 2;
-        }
-
-        .form-card {
-            background: var(--surface);
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(76, 94, 207, 0.16), 0 4px 20px rgba(0, 0, 0, 0.08);
-            overflow: hidden;
-        }
-
-        /* Tab strip */
-        .form-tabs {
-            display: flex;
-            border-bottom: 1px solid var(--border);
-            background: #f8f9fc;
-        }
-
-        .form-tab {
-            flex: 1;
-            padding: 16px;
-            text-align: center;
-            font-size: 0.88rem;
-            font-weight: 600;
-            color: var(--muted);
-            cursor: pointer;
-            border: none;
-            background: transparent;
-            border-bottom: 3px solid transparent;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            transition: color 0.2s, border-color 0.2s;
-        }
-
-        .form-tab.active { color: var(--accent-dark); border-bottom-color: var(--accent); }
-        .form-tab:hover:not(.active) { color: var(--text); }
-
-        .form-pane { display: none; padding: 36px; }
-        .form-pane.active { display: block; }
-
-        /* Field styles */
-        .field-label {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 0.8rem;
-            font-weight: 700;
-            color: var(--muted);
-            text-transform: uppercase;
-            letter-spacing: 0.07em;
-            margin-bottom: 10px;
-        }
-
-        .field-label i { color: var(--accent); }
-
-        .url-input-wrap {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            background: #f8f9fc;
-            border: 1.5px solid var(--border);
-            border-radius: 12px;
-            padding: 10px 18px;
-            transition: border-color 0.2s, box-shadow 0.2s;
-        }
-
-        .url-input-wrap:focus-within {
-            border-color: var(--accent);
-            box-shadow: 0 0 0 3px rgba(91, 109, 212, 0.12);
-        }
-
-        .url-input-wrap i { color: var(--accent); flex-shrink: 0; }
-
-        .url-input-wrap input {
-            flex: 1;
-            border: none;
-            background: transparent;
-            font-family: 'Inter', sans-serif;
-            font-size: 0.97rem;
-            color: var(--text);
-            outline: none;
-            padding: 4px 0;
-        }
-
-        .url-input-wrap input::placeholder { color: #b0b7c3; }
-
-        .field-gap { margin-top: 24px; }
-
-        textarea.context-area {
-            width: 100%;
-            background: #f8f9fc;
-            border: 1.5px solid var(--border);
-            border-radius: 12px;
-            color: var(--text);
-            font-family: 'Inter', sans-serif;
-            font-size: 0.93rem;
-            padding: 14px 18px;
-            resize: vertical;
-            min-height: 128px;
-            outline: none;
-            line-height: 1.65;
-            transition: border-color 0.2s, box-shadow 0.2s;
-        }
-
-        textarea.context-area::placeholder { color: #b0b7c3; }
-
-        textarea.context-area:focus {
-            border-color: var(--accent);
-            box-shadow: 0 0 0 3px rgba(91, 109, 212, 0.1);
-        }
-
-        .field-hint {
-            font-size: 0.78rem;
-            color: var(--muted);
-            margin-top: 8px;
-            display: flex;
-            align-items: flex-start;
-            gap: 6px;
-        }
-
-        /* Submit button */
-        .btn-submit {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            width: 100%;
-            margin-top: 28px;
-            padding: 16px;
-            border: none;
-            border-radius: 12px;
-            cursor: pointer;
-            font-family: 'Inter', sans-serif;
-            font-size: 1rem;
-            font-weight: 700;
-            color: #fff;
-            background: linear-gradient(135deg, var(--hero-from) 0%, var(--hero-to) 100%);
-            box-shadow: 0 6px 24px rgba(76, 94, 207, 0.35);
-            transition: transform 0.15s, box-shadow 0.15s, opacity 0.15s;
-            letter-spacing: 0.01em;
-        }
-
-        .btn-submit:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 32px rgba(76, 94, 207, 0.45);
-        }
-
-        .btn-submit:active { transform: translateY(0); }
-
-        .btn-batch-submit {
-            background: linear-gradient(135deg, #5b6dd4 0%, #8b42c8 100%);
-            box-shadow: 0 6px 24px rgba(91, 109, 212, 0.35);
-        }
-
-        .btn-batch-submit:hover { box-shadow: 0 10px 32px rgba(91, 109, 212, 0.45); }
-
-        /* Upload area */
-        .upload-zone {
-            border: 2px dashed var(--border);
-            border-radius: 12px;
-            padding: 30px;
-            text-align: center;
-            cursor: pointer;
-            transition: border-color 0.2s, background 0.2s;
-            position: relative;
-        }
-
-        .upload-zone:hover { border-color: var(--accent); background: #f0f2ff; }
-        .upload-zone i { font-size: 2.2rem; color: var(--accent); margin-bottom: 10px; display: block; }
-        .upload-zone .upload-label { font-weight: 600; font-size: 0.95rem; }
-        .upload-zone .upload-hint { font-size: 0.8rem; color: var(--muted); margin-top: 6px; }
-
-        .upload-zone input[type=file] {
-            position: absolute;
-            inset: 0;
-            opacity: 0;
-            cursor: pointer;
-            width: 100%;
-            height: 100%;
-        }
-
-        /* Error */
-        .alert-error {
-            background: #fef2f2;
-            border: 1px solid #fecaca;
-            color: #b91c1c;
-            border-radius: 10px;
-            padding: 14px 18px;
-            margin-bottom: 24px;
-            font-size: 0.88rem;
-            display: flex;
-            align-items: flex-start;
-            gap: 10px;
-        }
-
-        /* ── FEATURES SECTION ── */
-        .features-section {
-            max-width: 900px;
-            margin: 0 auto;
-            padding: 0 20px 80px;
-        }
-
-        .features-section h2 {
-            text-align: center;
-            font-size: 1.5rem;
-            font-weight: 800;
-            color: var(--text);
-            margin-bottom: 10px;
-        }
-
-        .features-section .section-sub {
-            text-align: center;
-            color: var(--muted);
-            font-size: 0.9rem;
-            margin-bottom: 36px;
-        }
-
-        .features-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
-            gap: 18px;
-        }
-
-        .feature-card {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            padding: 28px 22px;
-            text-align: center;
-            transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-        }
-
-        .feature-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 10px 28px rgba(76, 94, 207, 0.14);
-            border-color: #c5c8f0;
-        }
-
-        .feature-icon {
-            width: 52px;
-            height: 52px;
-            border-radius: 14px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.35rem;
-            margin: 0 auto 16px;
-        }
-
-        .fi-green  { background: #eef0ff; color: var(--accent); }
-        .fi-purple { background: #f4eeff; color: #8b42c8; }
-        .fi-orange { background: #fff7ed; color: #c2410c; }
-        .fi-blue   { background: #eff6ff; color: #1d4ed8; }
-        .fi-teal   { background: #f0fdfa; color: #0d9488; }
-        .fi-rose   { background: #fff1f2; color: #e11d48; }
-
-        .feature-card h3 { font-size: 0.95rem; font-weight: 700; margin-bottom: 8px; }
-        .feature-card p  { font-size: 0.82rem; color: var(--muted); line-height: 1.6; }
-
-        /* ── FOOTER ── */
-        footer {
-            text-align: center;
-            padding: 28px;
-            font-size: 0.78rem;
-            color: var(--muted);
-            border-top: 1px solid var(--border);
-            background: var(--surface);
-        }
-
-        /* ── LOADER ── */
-        #loader {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(255, 255, 255, 0.82);
-            z-index: 999;
-            align-items: center;
-            justify-content: center;
-            flex-direction: column;
-            gap: 18px;
-            backdrop-filter: blur(4px);
-        }
-
-        .loader-ring {
-            width: 56px;
-            height: 56px;
-            border: 4px solid var(--border);
-            border-top-color: var(--accent);
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-        }
-
-        .loader-text { font-weight: 600; color: var(--text); font-size: 0.95rem; }
-
-        @keyframes spin { to { transform: rotate(360deg); } }
+      }
     </style>
-</head>
+  </head>
 
-<body>
-
+  <body>
     <!-- Navbar -->
     <nav>
-        <a class="nav-logo" href="/">
-            <div class="logo-icon"><i class="fab fa-github"></i></div>
-            GitHub <span><span>Analyzer</span></span>
-        </a>
-        <div class="nav-pills">
-            <button class="nav-pill active">Analyzer</button>
-        </div>
+      <a class="nav-logo" href="/">
+        <div class="logo-icon"><i class="fab fa-github"></i></div>
+        GitHub <span><span>Analyzer</span></span>
+      </a>
+      <div class="nav-pills">
+        <button class="nav-pill active">Analyzer</button>
+      </div>
     </nav>
 
     <!-- Hero -->
     <div class="hero">
-        <div class="hero-eyebrow">
-            <i class="fas fa-bolt"></i> AI-Powered · Real-Time · Any Repository · Any Language
-        </div>
-        <h1>Analyze Any GitHub Repo<br><em>Instantly with AI</em></h1>
-        <p class="hero-sub">
-            Paste a URL, describe your criteria, and get deep AI feedback on code quality,
-            security, documentation, and architecture — for any language or stack.
-        </p>
+      <div class="hero-eyebrow">
+        <i class="fas fa-bolt"></i> AI-Powered · Real-Time · Any Repository ·
+        Any Language
+      </div>
+      <h1>Analyze Any GitHub Repo<br /><em>Instantly with AI</em></h1>
+      <p class="hero-sub">
+        Paste a URL, describe your criteria, and get deep AI feedback on code
+        quality, security, documentation, and architecture — for any language or
+        stack.
+      </p>
 
-        <!-- Language badges -->
-        <div class="lang-badges">
-            <span class="lang-badge">Python</span>
-            <span class="lang-badge">JavaScript / TypeScript</span>
-            <span class="lang-badge">Go</span>
-            <span class="lang-badge">Rust</span>
-            <span class="lang-badge">Java / Kotlin</span>
-            <span class="lang-badge">C / C++</span>
-            <span class="lang-badge">Ruby</span>
-            <span class="lang-badge">PHP</span>
-            <span class="lang-badge">Swift</span>
-            <span class="lang-badge">& more</span>
-        </div>
+      <!-- Language badges -->
+      <div class="lang-badges">
+        <span class="lang-badge">Python</span>
+        <span class="lang-badge">JavaScript / TypeScript</span>
+        <span class="lang-badge">Go</span>
+        <span class="lang-badge">Rust</span>
+        <span class="lang-badge">Java / Kotlin</span>
+        <span class="lang-badge">C / C++</span>
+        <span class="lang-badge">Ruby</span>
+        <span class="lang-badge">PHP</span>
+        <span class="lang-badge">Swift</span>
+        <span class="lang-badge">& more</span>
+      </div>
 
-        <div class="hero-steps">
-            <div class="hero-step"><div class="step-num">1</div><span>Paste GitHub URL</span></div>
-            <div class="hero-step"><div class="step-num">2</div><span>Describe your criteria</span></div>
-            <div class="hero-step"><div class="step-num">3</div><span>Get AI feedback</span></div>
+      <div class="hero-steps">
+        <div class="hero-step">
+          <div class="step-num">1</div>
+          <span>Paste GitHub URL</span>
         </div>
+        <div class="hero-step">
+          <div class="step-num">2</div>
+          <span>Describe your criteria</span>
+        </div>
+        <div class="hero-step">
+          <div class="step-num">3</div>
+          <span>Get AI feedback</span>
+        </div>
+      </div>
     </div>
 
     <!-- Floating form card -->
     <div class="form-wrap">
-        {% if error %}
-        <div class="alert-error">
-            <i class="fas fa-exclamation-circle" style="margin-top:2px;flex-shrink:0;"></i>
-            <span>{{ error }}</span>
+      {% if error %}
+      <div class="alert-error">
+        <i
+          class="fas fa-exclamation-circle"
+          style="margin-top: 2px; flex-shrink: 0"
+        ></i>
+        <span>{{ error }}</span>
+      </div>
+      {% endif %}
+
+      <div class="form-card">
+        <!-- Tabs -->
+        <div class="form-tabs">
+          <button
+            class="form-tab active"
+            id="tab-single"
+            onclick="switchTab('single')"
+          >
+            <i class="fas fa-link"></i> Single Repository
+          </button>
+          <button class="form-tab" id="tab-batch" onclick="switchTab('batch')">
+            <i class="fas fa-table"></i> Batch Upload
+          </button>
         </div>
-        {% endif %}
 
-        <div class="form-card">
-            <!-- Tabs -->
-            <div class="form-tabs">
-                <button class="form-tab active" id="tab-single" onclick="switchTab('single')">
-                    <i class="fas fa-link"></i> Single Repository
-                </button>
-                <button class="form-tab" id="tab-batch" onclick="switchTab('batch')">
-                    <i class="fas fa-table"></i> Batch Upload
-                </button>
+        <!-- Single repo pane -->
+        <div class="form-pane active" id="pane-single">
+          <form action="/analyze-single" method="POST" onsubmit="showLoader()">
+            <label class="field-label">
+              <i class="fab fa-github"></i> Repository URL
+            </label>
+            <div class="url-input-wrap">
+              <i class="fas fa-link"></i>
+              <input
+                type="url"
+                name="github_url"
+                placeholder="https://github.com/username/repository"
+                required
+                autocomplete="off"
+              />
             </div>
 
-            <!-- Single repo pane -->
-            <div class="form-pane active" id="pane-single">
-                <form action="/analyze-single" method="POST" onsubmit="showLoader()">
-                    <label class="field-label">
-                        <i class="fab fa-github"></i> Repository URL
-                    </label>
-                    <div class="url-input-wrap">
-                        <i class="fas fa-link"></i>
-                        <input type="url" name="github_url"
-                            placeholder="https://github.com/username/repository"
-                            required autocomplete="off">
-                    </div>
-
-                    <div class="field-gap">
-                        <label class="field-label">
-                            <i class="fas fa-bullseye"></i> Evaluation Context
-                            <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:0.78rem;color:#a0aab4;margin-left:4px;">(optional)</span>
-                        </label>
-                        <textarea class="context-area" name="user_context"
-                            placeholder="Describe what to evaluate, for example:&#10;• Is this production-ready? Focus on error handling, security, and test coverage&#10;• Evaluate this Go API for clean architecture and performance patterns&#10;• Review this React app for accessibility and component reusability&#10;• Check if this Rust library follows idiomatic patterns&#10;• Assess this DevOps repo for IaC best practices&#10;&#10;Leave blank for a general software engineering review."></textarea>
-                        <p class="field-hint">
-                            <i class="fas fa-lightbulb"></i>
-                            The more specific your context, the more targeted and actionable the AI feedback will be.
-                        </p>
-                    </div>
-
-                    <button type="submit" class="btn-submit" id="btn-analyze-single">
-                        <i class="fas fa-bolt"></i>
-                        Analyze Repository
-                    </button>
-                </form>
-            </div>
-
-            <!-- Batch pane -->
-            <div class="form-pane" id="pane-batch">
-                <form action="/analyze" method="POST" enctype="multipart/form-data" onsubmit="showLoader()">
-                    <label class="field-label">
-                        <i class="fas fa-file-excel"></i> Repositories Excel File
-                    </label>
-                    <div class="upload-zone" id="upload-zone">
-                        <i class="fas fa-cloud-upload-alt"></i>
-                        <div class="upload-label" id="upload-label">Click to upload or drag &amp; drop</div>
-                        <div class="upload-hint">Required columns: "name of the student", "github link" — .xlsx or .xls</div>
-                        <input type="file" name="students_file" accept=".xlsx,.xls" required
-                            onchange="onFileChange(this)">
-                    </div>
-
-                    <div class="field-gap">
-                        <label class="field-label">
-                            <i class="fas fa-bullseye"></i> Evaluation Context
-                        </label>
-                        <textarea class="context-area" name="user_context"
-                            placeholder="Describe the evaluation criteria for all repositories, e.g.:&#10;Evaluate for a hackathon — assess completeness, code quality, documentation, and creativity."
-                            style="min-height:100px;"></textarea>
-                    </div>
-
-                    <button type="submit" class="btn-submit btn-batch-submit" id="btn-analyze-batch">
-                        <i class="fas fa-play"></i>
-                        Start Batch Analysis
-                    </button>
-                </form>
-            </div>
+            <button type="submit" class="btn-submit" id="btn-analyze-single">
+              <i class="fas fa-bolt"></i>
+              Analyze Repository
+            </button>
+          </form>
         </div>
+
+        <!-- Batch pane -->
+        <div class="form-pane" id="pane-batch">
+          <form
+            action="/analyze"
+            method="POST"
+            enctype="multipart/form-data"
+            onsubmit="showLoader()"
+          >
+            <label class="field-label">
+              <i class="fas fa-file-excel"></i> Repositories Excel File
+            </label>
+            <div class="upload-zone" id="upload-zone">
+              <i class="fas fa-cloud-upload-alt"></i>
+              <div class="upload-label" id="upload-label">
+                Click to upload or drag &amp; drop
+              </div>
+              <div class="upload-hint">
+                Required columns: "name of the student", "github link" — .xlsx
+                or .xls
+              </div>
+              <input
+                type="file"
+                name="students_file"
+                accept=".xlsx,.xls"
+                required
+                onchange="onFileChange(this)"
+              />
+            </div>
+
+            <button
+              type="submit"
+              class="btn-submit btn-batch-submit"
+              id="btn-analyze-batch"
+            >
+              <i class="fas fa-play"></i>
+              Start Batch Analysis
+            </button>
+          </form>
+        </div>
+      </div>
     </div>
 
     <!-- Features -->
     <div class="features-section">
-        <h2>Why use GitHub Analyzer?</h2>
-        <p class="section-sub">Production-grade analysis for any codebase — no setup required.</p>
-        <div class="features-grid">
-            <div class="feature-card">
-                <div class="feature-icon fi-green"><i class="fas fa-globe"></i></div>
-                <h3>Any Language</h3>
-                <p>Supports 40+ file types: Python, Go, Rust, Java, JS/TS, C++, Ruby, Swift, and more.</p>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon fi-purple"><i class="fas fa-sitemap"></i></div>
-                <h3>Unlimited Depth</h3>
-                <p>Fetches the complete repo tree in one API call — no folder left behind.</p>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon fi-orange"><i class="fas fa-bolt"></i></div>
-                <h3>Real-Time Results</h3>
-                <p>Live progress updates as AI scans and evaluates. No waiting in the dark.</p>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon fi-rose"><i class="fas fa-file-excel"></i></div>
-                <h3>Excel Export</h3>
-                <p>Download full evaluation reports with ratings and feedback for every repo.</p>
-            </div>
+      <h2>Why use GitHub Analyzer?</h2>
+      <p class="section-sub">
+        Production-grade analysis for any codebase — no setup required.
+      </p>
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon fi-green"><i class="fas fa-globe"></i></div>
+          <h3>Any Language</h3>
+          <p>
+            Supports 40+ file types: Python, Go, Rust, Java, JS/TS, C++, Ruby,
+            Swift, and more.
+          </p>
         </div>
+        <div class="feature-card">
+          <div class="feature-icon fi-purple">
+            <i class="fas fa-sitemap"></i>
+          </div>
+          <h3>Unlimited Depth</h3>
+          <p>
+            Fetches the complete repo tree in one API call — no folder left
+            behind.
+          </p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon fi-orange"><i class="fas fa-bolt"></i></div>
+          <h3>Real-Time Results</h3>
+          <p>
+            Live progress updates as AI scans and evaluates. No waiting in the
+            dark.
+          </p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon fi-rose">
+            <i class="fas fa-file-excel"></i>
+          </div>
+          <h3>Excel Export</h3>
+          <p>
+            Download full evaluation reports with ratings and feedback for every
+            repo.
+          </p>
+        </div>
+      </div>
     </div>
 
     <footer>
-        GitHub Repository Analyzer v3.0 &nbsp;·&nbsp; Universal AI Code Review &nbsp;·&nbsp; Powered by Groq LLM &nbsp;·&nbsp; Built with FastAPI
+      GitHub Repository Analyzer v3.0 &nbsp;·&nbsp; Universal AI Code Review
+      &nbsp;·&nbsp; Powered by Groq LLM &nbsp;·&nbsp; Built with FastAPI
     </footer>
 
     <!-- Loader overlay -->
     <div id="loader">
-        <div class="loader-ring"></div>
-        <p class="loader-text">Connecting to GitHub...</p>
+      <div class="loader-ring"></div>
+      <p class="loader-text">Connecting to GitHub...</p>
     </div>
 
     <script>
-        function switchTab(name) {
-            document.querySelectorAll('.form-tab').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.form-pane').forEach(p => p.classList.remove('active'));
-            document.getElementById('tab-' + name).classList.add('active');
-            document.getElementById('pane-' + name).classList.add('active');
-        }
+      function switchTab(name) {
+        document
+          .querySelectorAll(".form-tab")
+          .forEach((t) => t.classList.remove("active"));
+        document
+          .querySelectorAll(".form-pane")
+          .forEach((p) => p.classList.remove("active"));
+        document.getElementById("tab-" + name).classList.add("active");
+        document.getElementById("pane-" + name).classList.add("active");
+      }
 
-        function onFileChange(input) {
-            const label = document.getElementById('upload-label');
-            label.textContent = input.files.length > 0 ? input.files[0].name : 'Click to upload or drag & drop';
-        }
+      function onFileChange(input) {
+        const label = document.getElementById("upload-label");
+        label.textContent =
+          input.files.length > 0
+            ? input.files[0].name
+            : "Click to upload or drag & drop";
+      }
 
-        function showLoader() {
-            document.getElementById('loader').style.display = 'flex';
-        }
+      function showLoader() {
+        document.getElementById("loader").style.display = "flex";
+      }
     </script>
-</body>
-
+  </body>
 </html>

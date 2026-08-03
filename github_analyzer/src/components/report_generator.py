@@ -1,6 +1,7 @@
 import pandas as pd
 import re
 from src.logger.logging_config import setup_logging
+from src.scoring import determine_rating_category, rating_scale_text
 
 logger = setup_logging()
 
@@ -88,34 +89,75 @@ class ReportGenerator:
             "overall_rating": sections["overall_rating"]
         }
 
+    def _format_breakdown_text(self, breakdown):
+        """Turn the deterministic rubric into a readable plain-text block."""
+        if not breakdown:
+            return ""
+        # New rubric uses 1 point per category
+        return "\n".join(
+            f"- {name}: {points}/1 - {reason}" for name, points, reason in breakdown
+        )
+
+    def _compose_feedback_with_breakdown(self, row):
+        """Build feedback text that includes the deterministic score breakdown."""
+        feedback = row.get("Feedback", "") or row.get("feedback", "") or ""
+        breakdown = row.get("score_breakdown") or []
+
+        if not breakdown:
+            return feedback
+
+        breakdown_text = "\n\nSCORING BREAKDOWN:\n" + self._format_breakdown_text(breakdown)
+        return f"{feedback}\n{breakdown_text}".strip()
+
     def write_evaluation_file(self, results, output_file="evaluation.xlsx"):
         """
         Writes the list of result dictionaries to an Excel file
         with a single 'Feedback' column containing all evaluation sections.
         """
         try:
-            column_mapping = {
-                "student_name": "Name / Repo",
-                "github_link": "GitHub Link",
-                "repo_found": "Repo Found",
-                "files_analyzed": "Files Analyzed",
-                "feedback": "Feedback"
-            }
+            export_rows = []
+            for result in results:
+                if not isinstance(result, dict):
+                    continue
 
-            df = pd.DataFrame(results)
+                normalized = dict(result)
+                feedback_value = normalized.get("feedback") or normalized.get("Feedback") or ""
+                breakdown = normalized.get("score_breakdown") or []
+                breakdown_text = self._format_breakdown_text(breakdown)
 
-            if df.empty:
+                # Minimal export: only repo details, numeric score (Overall Rating), and Selection
+                normalized["Name / Repo"] = normalized.get("student_name") or normalized.get("name of the student") or normalized.get("label") or ""
+                normalized["GitHub Link"] = normalized.get("github_link") or ""
+                normalized["Repo Found"] = normalized.get("repo_found") or ""
+                # Overall numeric score (kept for reporting but not displayed on results page)
+                normalized["Overall Rating"] = normalized.get("overall_rating") or ""
+                # Selection label based on numeric overall rating (>6 -> Shortlisted, <=6 -> Rejected)
+                normalized["Selection"] = "No Rating"
+                if normalized["Overall Rating"]:
+                    try:
+                        score_val = float(normalized["Overall Rating"].split('/')[0])
+                        if score_val > 6:
+                            normalized["Selection"] = "Shortlisted"
+                        else:
+                            normalized["Selection"] = "Rejected"
+                    except Exception:
+                        normalized["Selection"] = "No Rating"
+
+                export_rows.append(normalized)
+
+            if not export_rows:
                 logger.warning("No results to write to Excel.")
                 return
 
-            # Normalise: if 'label' exists but not 'student_name', use it
-            if "student_name" not in df.columns and "label" in df.columns:
-                df["student_name"] = df["label"]
-
-            rename_map = {k: v for k, v in column_mapping.items() if k in df.columns}
-            df = df.rename(columns=rename_map)
-
-            desired_columns = [v for v in column_mapping.values()]
+            df = pd.DataFrame(export_rows)
+            # Only export the minimal set the user requested
+            desired_columns = [
+                "Name / Repo",
+                "GitHub Link",
+                "Repo Found",
+                "Overall Rating",
+                "Selection",
+            ]
             df = df[[col for col in desired_columns if col in df.columns]]
 
             df.to_excel(output_file, index=False)

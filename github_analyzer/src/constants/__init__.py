@@ -2,9 +2,18 @@ import os
 from pathlib import Path
 from dotenv import load_dotenv
 
-# Always load the .env from the project root (parent of github_analyzer/)
-_env_path = Path(__file__).resolve().parents[3] / ".env"
-load_dotenv(_env_path, override=True)
+# Load the .env from the actual project directory, with a fallback to the workspace root.
+_env_candidates = [
+    Path(__file__).resolve().parents[2] / ".env",  # github_analyzer/ folder
+    Path(__file__).resolve().parents[3] / ".env",  # workspace root fallback
+]
+
+for _env_path in _env_candidates:
+    if _env_path.exists():
+        load_dotenv(_env_path, override=True)
+        break
+else:
+    load_dotenv(override=True)
 
 
 class Config:

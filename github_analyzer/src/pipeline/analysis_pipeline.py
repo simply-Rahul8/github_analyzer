@@ -4,6 +4,7 @@ from src.components.llm_engine import LLMEngine
 from src.components.report_generator import ReportGenerator
 from src.constants import Config
 from src.logger.logging_config import setup_logging
+from src.scoring import compute_deterministic_score, determine_rating_category, rating_scale_text
 
 logger = setup_logging()
 
@@ -82,6 +83,24 @@ class AnalysisPipeline:
             # 4. Parse result
             _update("Parsing AI response and building report...")
             parsed = self.report_generator.parse_llm_response(analysis)
+
+            # Compute deterministic rubric score (authoritative)
+            deterministic_score, score_breakdown = compute_deterministic_score(
+                repo_text=repo_text,
+                file_paths=file_paths,
+                repo_metadata=metadata,
+                repo_accessible=True,
+            )
+
+            # Preserve any LLM-provided rating for transparency, but always
+            # override the final overall rating with the deterministic score.
+            parsed["llm_overall_rating"] = parsed.get("overall_rating") or ""
+            parsed["score_breakdown"] = score_breakdown
+            parsed["deterministic_score"] = deterministic_score
+            parsed["overall_rating"] = f"{deterministic_score}/10"
+            parsed["rating_category"] = determine_rating_category(deterministic_score)
+            parsed["rating_bands"] = rating_scale_text()
+
             result.update(parsed)
             result["status"] = "Success"
             logger.info(f"Successfully analyzed {repo.full_name}")
