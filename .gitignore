@@ -1,0 +1,15 @@
+.venv
+env
+.env
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# Logs
+*.log
+logs.txt
+
+# Generated files
+github_analyzer/outputs/
+github_analyzer/uploads/

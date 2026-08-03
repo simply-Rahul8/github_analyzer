@@ -1,0 +1,12 @@
+pandas
+openpyxl
+requests
+PyGithub
+nbformat
+python-dotenv
+groq
+fastapi==0.110.0
+uvicorn==0.29.0
+python-multipart
+aiofiles
+Jinja2==3.1.3

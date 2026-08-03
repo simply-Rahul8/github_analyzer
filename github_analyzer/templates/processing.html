@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analyzing... — GitHub Repository Analyzer</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --bg: #f5f7fa;
+            --surface: #ffffff;
+            --border: #dde1e7;
+            --accent: #6c63ff;
+            --accent2: #00b894;
+            --text: #1a1d23;
+            --muted: #6c757d;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image: linear-gradient(var(--border) 1px, transparent 1px),
+                linear-gradient(90deg, var(--border) 1px, transparent 1px);
+            background-size: 40px 40px;
+            opacity: 0.25;
+            pointer-events: none;
+        }
+
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 50px 48px;
+            max-width: 560px;
+            width: 100%;
+            text-align: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: -1px;
+            left: 15%;
+            right: 15%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #3dbc5c, #5b52e8, transparent);
+        }
+
+        /* Animated scanner icon */
+        .scan-icon {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: rgba(61, 188, 92, 0.10);
+            border: 2px solid rgba(61, 188, 92, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 30px;
+            position: relative;
+        }
+
+        .scan-icon i {
+            font-size: 2rem;
+            color: #3dbc5c;
+        }
+
+        .scan-icon::after {
+            content: '';
+            position: absolute;
+            inset: -8px;
+            border-radius: 50%;
+            border: 2px solid transparent;
+            border-top-color: #3dbc5c;
+            border-right-color: #5b52e8;
+            animation: spin 1.2s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: var(--muted);
+            font-size: 0.92rem;
+            margin-bottom: 36px;
+            line-height: 1.6;
+        }
+
+        /* Progress bar */
+        .progress-wrap {
+            background: #e8eaf0;
+            border-radius: 50px;
+            height: 8px;
+            overflow: hidden;
+            margin-bottom: 14px;
+        }
+
+        .progress-bar {
+            height: 100%;
+            border-radius: 50px;
+            background: linear-gradient(90deg, var(--accent), var(--accent2));
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+
+        .progress-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.82rem;
+            color: var(--muted);
+            margin-bottom: 30px;
+        }
+
+        #status-msg {
+            font-size: 0.92rem;
+            color: var(--text);
+            min-height: 1.4em;
+            font-weight: 500;
+        }
+
+        /* Log stream */
+        .log-stream {
+            background: #f8f9fa;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 16px;
+            margin-top: 28px;
+            text-align: left;
+            max-height: 180px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.78rem;
+            color: #2d7a55;
+            line-height: 1.7;
+        }
+
+        .log-stream .log-line::before {
+            content: '> ';
+            color: var(--accent2);
+        }
+
+        .log-stream .log-line.error {
+            color: #ff6b6b;
+        }
+
+        .error-box {
+            background: #fdecea;
+            border: 1px solid #f5b7b1;
+            border-radius: 10px;
+            padding: 18px;
+            margin-top: 20px;
+            color: #c0392b;
+            font-size: 0.88rem;
+        }
+
+        a.btn-back {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 28px;
+            padding: 12px 24px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            color: var(--muted);
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: border-color 0.2s, color 0.2s;
+        }
+
+        a.btn-back:hover {
+            border-color: var(--accent);
+            color: var(--text);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="card">
+        <div class="scan-icon">
+            <i class="fab fa-github"></i>
+        </div>
+        <h2 id="status-heading">Scanning Repository</h2>
+        <p class="subtitle" id="status-msg">Connecting to GitHub and collecting files...</p>
+
+        <div class="progress-wrap">
+            <div class="progress-bar" id="progress-bar"></div>
+        </div>
+        <div class="progress-label">
+            <span id="progress-pct">0%</span>
+            <span id="progress-state">Processing...</span>
+        </div>
+
+        <div class="log-stream" id="log-stream">
+            <div class="log-line">Initializing analysis pipeline...</div>
+        </div>
+
+        <div id="error-container"></div>
+
+        <a href="/" class="btn-back">
+            <i class="fas fa-arrow-left"></i>
+            Back to Analyzer
+        </a>
+    </div>
+
+    <script>
+        const taskId = "{{ task_id }}";
+        const bar = document.getElementById('progress-bar');
+        const pct = document.getElementById('progress-pct');
+        const stateEl = document.getElementById('progress-state');
+        const msgEl = document.getElementById('status-msg');
+        const headingEl = document.getElementById('status-heading');
+        const logStream = document.getElementById('log-stream');
+        const errContainer = document.getElementById('error-container');
+
+        let lastMsg = '';
+
+        function addLog(msg, isError = false) {
+            if (msg === lastMsg) return;
+            lastMsg = msg;
+            const line = document.createElement('div');
+            line.className = 'log-line' + (isError ? ' error' : '');
+            line.textContent = msg;
+            logStream.appendChild(line);
+            logStream.scrollTop = logStream.scrollHeight;
+        }
+
+        async function poll() {
+            try {
+                const res = await fetch(`/api/status/${taskId}`);
+                const data = await res.json();
+
+                const progress = Math.min(data.progress || 0, 100);
+                bar.style.width = progress + '%';
+                pct.textContent = Math.round(progress) + '%';
+
+                if (data.message) {
+                    msgEl.textContent = data.message;
+                    addLog(data.message);
+                }
+
+                if (data.state === 'COMPLETED') {
+                    headingEl.textContent = 'Analysis Complete!';
+                    bar.style.width = '100%';
+                    pct.textContent = '100%';
+                    stateEl.textContent = 'Done';
+                    addLog('Analysis complete — redirecting to results...');
+                    setTimeout(() => window.location.href = `/results/${taskId}`, 1200);
+                    return;
+                }
+
+                if (data.state === 'FAILED') {
+                    headingEl.textContent = 'Analysis Failed';
+                    stateEl.textContent = 'Failed';
+                    addLog(data.error || 'Unknown error', true);
+                    errContainer.innerHTML = `<div class="error-box"><i class="fas fa-exclamation-circle"></i> ${data.error || 'An error occurred.'}</div>`;
+                    return;
+                }
+
+                if (data.state === 'NOT_FOUND') {
+                    setTimeout(poll, 1500);
+                    return;
+                }
+
+                setTimeout(poll, 1500);
+            } catch (e) {
+                addLog('Connection error — retrying...', true);
+                setTimeout(poll, 3000);
+            }
+        }
+
+        poll();
+    </script>
+</body>
+
+</html>
