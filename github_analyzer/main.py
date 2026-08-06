@@ -111,6 +111,7 @@ async def analyze_single(
     background_tasks: BackgroundTasks,
     github_url: str = Form(...),
     user_context: str = Form(""),
+    criteria: str = Form("")
 ):
     """
     Start a real-time analysis for a single GitHub repository URL.
@@ -125,11 +126,13 @@ async def analyze_single(
             })
 
         task_id = str(uuid.uuid4())
+        # prefer explicit 'criteria' field if provided
+        ctx = criteria.strip() if criteria and criteria.strip() else user_context
         background_tasks.add_task(
             async_pipeline.run_single_repo_task,
             task_id,
             github_url,
-            user_context,
+            ctx,
             OUTPUT_DIR
         )
         return RedirectResponse(url=f"/status-page/{task_id}", status_code=303)
@@ -152,6 +155,7 @@ async def analyze(
     background_tasks: BackgroundTasks,
     students_file: UploadFile = File(...),
     user_context: str = Form(""),
+    criteria: str = Form(""),
     repo_keywords: Optional[str] = Form(None)
 ):
     """
@@ -174,11 +178,12 @@ async def analyze(
 
         keywords_list = [k.strip() for k in repo_keywords.split(',')] if repo_keywords else None
 
+        ctx = criteria.strip() if criteria and criteria.strip() else user_context
         background_tasks.add_task(
             async_pipeline.run_analysis_task,
             task_id,
             student_path,
-            user_context,
+            ctx,
             OUTPUT_DIR,
             keywords_list
         )

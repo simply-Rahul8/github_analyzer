@@ -111,55 +111,38 @@ class ReportGenerator:
 
     def write_evaluation_file(self, results, output_file="evaluation.xlsx"):
         """
-        Writes the list of result dictionaries to an Excel file
-        with a single 'Feedback' column containing all evaluation sections.
+        Writes the list of result dictionaries to an Excel file with only the requested minimal fields.
         """
         try:
             export_rows = []
-            for result in results:
+            for idx, result in enumerate(results, start=1):
                 if not isinstance(result, dict):
                     continue
 
                 normalized = dict(result)
-                feedback_value = normalized.get("feedback") or normalized.get("Feedback") or ""
-                breakdown = normalized.get("score_breakdown") or []
-                breakdown_text = self._format_breakdown_text(breakdown)
+                github_url = normalized.get("github_link") or normalized.get("GitHub Link") or normalized.get("github_url") or ""
+                repo_name = normalized.get("student_name") or normalized.get("name of the student") or normalized.get("label") or ""
+                if not repo_name and github_url:
+                    repo_name = github_url.rstrip("/").split("/")[-1]
 
-                # Minimal export: only repo details, numeric score (Overall Rating), and Selection
-                normalized["Name / Repo"] = normalized.get("student_name") or normalized.get("name of the student") or normalized.get("label") or ""
-                normalized["GitHub Link"] = normalized.get("github_link") or ""
-                normalized["Repo Found"] = normalized.get("repo_found") or ""
-                # Overall numeric score (kept for reporting but not displayed on results page)
-                normalized["Overall Rating"] = normalized.get("overall_rating") or ""
-                # Selection label based on numeric overall rating (>6 -> Shortlisted, <=6 -> Rejected)
-                normalized["Selection"] = "No Rating"
-                if normalized["Overall Rating"]:
-                    try:
-                        score_val = float(normalized["Overall Rating"].split('/')[0])
-                        if score_val > 6:
-                            normalized["Selection"] = "Shortlisted"
-                        else:
-                            normalized["Selection"] = "Rejected"
-                    except Exception:
-                        normalized["Selection"] = "No Rating"
+                selection = normalized.get("selection") or ""
+                shortlisted = "Yes" if selection == "Shortlisted" else "No"
 
-                export_rows.append(normalized)
+                repo_category = normalized.get("repo_category") or normalized.get("category") or normalized.get("repository_category") or ""
+
+                export_rows.append({
+                    "Serial number": idx,
+                    "GitHub repo": repo_name,
+                    "GitHub URL": github_url,
+                    "Shortlisted": shortlisted,
+                    "Repository Category": repo_category,
+                })
 
             if not export_rows:
                 logger.warning("No results to write to Excel.")
                 return
 
             df = pd.DataFrame(export_rows)
-            # Only export the minimal set the user requested
-            desired_columns = [
-                "Name / Repo",
-                "GitHub Link",
-                "Repo Found",
-                "Overall Rating",
-                "Selection",
-            ]
-            df = df[[col for col in desired_columns if col in df.columns]]
-
             df.to_excel(output_file, index=False)
             logger.info(f"Successfully wrote results to {output_file}")
         except Exception as e:

@@ -20,31 +20,29 @@ def clean_github_url(url: str) -> str:
         # username/repo format
         url = f'https://github.com/{url}'
     elif not url.startswith('http') and len(url) > 0:
-        # Assume it's a username
+        # Bare username or other GitHub fragment
         url = f'https://github.com/{url}'
 
-    # Remove trailing slashes and common suffixes
+    # Remove trailing slashes, common suffixes, and extra path segments
     url = url.rstrip('/')
-    url = re.sub(r'/tree/.*$', '', url)  # Remove branch/tree paths
-    url = re.sub(r'/blob/.*$', '', url)  # Remove file paths
+    url = re.sub(r'/(tree|blob)/.*$', '', url)  # Remove branch/tree/file paths
+    url = re.sub(r'\.git$', '', url)            # Strip optional .git suffix
 
     return url
 
 def is_valid_github_url(url: str) -> bool:
     """
-    Validates if a string is a valid GitHub URL or username.
+    Validates if a string is a valid GitHub repository URL.
     """
     if not url or pd.isna(url):
         return False
 
     url = str(url).strip()
 
-    # Check for valid GitHub URL patterns
     github_patterns = [
-        r'^https?://github\.com/[a-zA-Z0-9_-]+/?$',
-        r'^https?://github\.com/[a-zA-Z0-9_-]+/[a-zA-Z0-9._-]+/?$',
-        r'^[a-zA-Z0-9_-]+$',  # Just username
-        r'^[a-zA-Z0-9_-]+/[a-zA-Z0-9._-]+$',  # username/repo
+        r'^https?://github\.com/[A-Za-z0-9_-]+/[A-Za-z0-9._-]+/?$',
+        r'^github\.com/[A-Za-z0-9_-]+/[A-Za-z0-9._-]+/?$',
+        r'^[A-Za-z0-9_-]+/[A-Za-z0-9._-]+(?:\.git)?$',
     ]
 
     return any(re.match(pattern, url) for pattern in github_patterns)

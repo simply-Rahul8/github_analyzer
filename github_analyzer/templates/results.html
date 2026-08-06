@@ -22,17 +22,21 @@
       }
 
       :root {
-        --bg: #f4f6fa;
+        --bg: #fff6f5;
         --surface: #ffffff;
-        --surface2: #f0f2f7;
-        --border: #dde1ec;
-        --accent: #5b52e8;
-        --accent2: #3dbc5c;
-        --text: #1c1c2e;
-        --muted: #6b7280;
+        --surface2: #fff6f4;
+        --border: #f6e9e7;
+        --hero-from: #ff4b4b; /* brighter coral */
+        --hero-to: #ff9a4b;   /* warm vibrant orange */
+        --accent: #00c2d4;    /* more vivid teal */
+        --accent2: #8B0000;   /* bright maroon */
+        --accent-rgb: 0,194,212;
+        --accent2-rgb: 139,0,0;
+        --text: #11161a;
+        --muted: #49545a;
         --positive: #1a9e50;
-        --negative: #dc2626;
-        --improve: #d97706;
+        --negative: #8B0000;  /* replace crimson with maroon */
+        --improve: #ff8a2b;
         --radius: 14px;
       }
 
@@ -68,29 +72,37 @@
       }
 
       /* ── STAT CARDS ── */
-      .stats-row {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
-        gap: 18px;
-        margin: 30px 0;
-      }
-
       .stat-card {
-        background: linear-gradient(135deg, #7b6cf0 0%, #4040b8 100%);
+        position: relative;
+        overflow: hidden;
+        background: linear-gradient(135deg, var(--accent2) 0%, var(--accent) 100%);
         border: none;
         border-radius: var(--radius);
         padding: 28px 22px;
         text-align: center;
         color: #fff;
-        box-shadow: 0 6px 24px rgba(91, 82, 232, 0.35);
+        box-shadow: 0 8px 30px rgba(var(--accent-rgb), 0.18);
         transition:
-          transform 0.2s,
-          box-shadow 0.2s;
+          transform 0.18s,
+          box-shadow 0.18s;
+      }
+
+      .stat-card::after {
+        content: '';
+        position: absolute;
+        inset: -20% -40%;
+        background: linear-gradient(120deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.28) 50%, rgba(255,255,255,0) 100%);
+        transform: skewX(-25deg);
+        background-size: 200% 100%;
+        pointer-events: none;
+        opacity: 0.9;
+        animation: shiny 2s linear infinite;
       }
 
       .stat-card:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 10px 32px rgba(91, 82, 232, 0.45);
+        transform: translateY(-6px) rotate(-1deg);
+        box-shadow: 0 18px 44px rgba(var(--accent-rgb), 0.28);
+        animation: jiggle 0.9s ease;
       }
       .stat-card i {
         font-size: 1.6rem;
@@ -109,6 +121,44 @@
         color: rgba(255, 255, 255, 0.8);
         font-size: 0.82rem;
         margin-top: 6px;
+      }
+
+      /* Compact stats row: small, side-by-side cards for summary */
+      .stats-row {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        justify-content: flex-start;
+        margin: 18px 0;
+      }
+
+      .stats-row .stat-card {
+        padding: 12px 14px;
+        border-radius: 10px;
+        min-width: 120px;
+        flex: 1 1 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, var(--accent2) 10%, var(--accent) 90%);
+        box-shadow: 0 8px 26px rgba(var(--accent-rgb), 0.14);
+      }
+
+      .stats-row .stat-card .stat-val {
+        font-size: 1.25rem;
+        font-weight: 800;
+      }
+
+      .stats-row .stat-card .stat-label {
+        font-size: 0.72rem;
+        opacity: 0.95;
+        margin-top: 6px;
+      }
+
+      @media (max-width: 640px) {
+        .stats-row { flex-direction: column; }
+        .stats-row .stat-card { width: 100%; }
       }
 
       /* ── DOWNLOAD CARD ── */
@@ -173,9 +223,27 @@
           border-color 0.2s;
       }
 
+      .result-card {
+        position: relative;
+        overflow: hidden;
+      }
+
       .result-card:hover {
-        box-shadow: 0 6px 24px rgba(91, 82, 232, 0.14);
-        border-color: #bcb8f5;
+        box-shadow: 0 10px 30px rgba(var(--accent-rgb), 0.10);
+        border-color: rgba(var(--accent-rgb), 0.12);
+        animation: jiggle 0.9s ease;
+      }
+
+      .result-card::after {
+        content: '';
+        position: absolute;
+        inset: -10% -30%;
+        background: linear-gradient(120deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.18) 50%, rgba(255,255,255,0) 100%);
+        transform: skewX(-20deg);
+        background-size: 200% 100%;
+        pointer-events: none;
+        opacity: 0.9;
+        animation: shiny 2.2s linear infinite;
       }
 
       /* Card header */
@@ -199,7 +267,7 @@
       .result-avatar {
         width: 42px;
         height: 42px;
-        background: linear-gradient(135deg, var(--accent), #9b59ff);
+        background: linear-gradient(135deg, var(--accent), var(--accent2));
         border-radius: 50%;
         display: flex;
         align-items: center;
@@ -208,6 +276,19 @@
         color: #fff;
         font-size: 1rem;
         flex-shrink: 0;
+      }
+
+      @keyframes jiggle {
+        0% { transform: translateY(0) rotate(0); }
+        25% { transform: translateY(-3px) rotate(-1deg); }
+        50% { transform: translateY(0) rotate(1deg); }
+        75% { transform: translateY(2px) rotate(-1deg); }
+        100% { transform: translateY(0) rotate(0); }
+      }
+
+      @keyframes shiny {
+        0% { background-position: -150% 0; }
+        100% { background-position: 150% 0; }
       }
 
       .result-name-text strong {
@@ -239,9 +320,9 @@
         display: inline-flex;
         align-items: center;
         gap: 6px;
-        padding: 6px 16px;
+        padding: 8px 18px;
         border-radius: 50px;
-        font-size: 0.9rem;
+        font-size: 0.98rem;
         font-weight: 700;
         background: linear-gradient(135deg, #1a6b38, #3dbc5c);
         color: #fff;
@@ -252,11 +333,74 @@
         display: inline-flex;
         align-items: center;
         gap: 5px;
-        padding: 4px 12px;
+        padding: 5px 14px;
         border-radius: 50px;
-        font-size: 0.76rem;
-        font-weight: 600;
+        font-size: 0.8rem;
+        font-weight: 700;
         cursor: default;
+      }
+
+      .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 16px;
+        border-radius: 14px;
+        font-size: 0.92rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.02em;
+      }
+
+      .status-shortlisted {
+        background: linear-gradient(135deg, #1a6b38, #3dbc5c);
+        color: #fff;
+        box-shadow: 0 6px 18px rgba(26, 107, 56, 0.25);
+      }
+
+      .status-rejected {
+        background: linear-gradient(135deg, #6e0d0d, var(--accent2));
+        color: #fff;
+        box-shadow: 0 8px 20px rgba(var(--accent2-rgb), 0.22);
+      }
+
+      .status-invalid {
+        background: #f3f4f6;
+        color: #374151;
+        border: 1px solid #d1d5db;
+      }
+
+      .requirement-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 9px 18px;
+        border-radius: 16px;
+        font-size: 0.96rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+      }
+
+      .requirement-satisfied {
+        background: linear-gradient(135deg, #0f766e, #10b981);
+        color: #ffffff;
+        box-shadow: 0 6px 18px rgba(16, 185, 129, 0.25);
+        border: 1px solid rgba(16, 185, 129, 0.3);
+      }
+
+      .requirement-not-satisfied {
+        background: linear-gradient(135deg, #7a0f0f, var(--accent2));
+        color: #ffffff;
+        box-shadow: 0 6px 18px rgba(var(--accent2-rgb), 0.22);
+        border: 1px solid rgba(var(--accent2-rgb), 0.18);
+      }
+
+      .requirement-provided {
+        background: #e0e7ff;
+        color: #4338ca;
+        border: 1px solid #c7d2fe;
+        box-shadow: 0 4px 14px rgba(199, 210, 254, 0.35);
       }
 
       .badge-success {
@@ -265,9 +409,9 @@
         border: 1px solid #b2e9d9;
       }
       .badge-danger {
-        background: #fdecea;
-        color: #c0392b;
-        border: 1px solid #f5b7b1;
+        background: rgba(var(--accent2-rgb), 0.06);
+        color: var(--accent2);
+        border: 1px solid rgba(var(--accent2-rgb), 0.12);
       }
       .badge-info {
         background: #eef0ff;
@@ -420,17 +564,23 @@
 
       .feedback-list {
         list-style: none;
+        margin: 0;
+        padding: 0;
         display: flex;
         flex-direction: column;
-        gap: 8px;
+        gap: 6px;
       }
 
       .feedback-list li {
-        font-size: 0.85rem;
+        font-size: 0.78rem;
         color: var(--text);
-        line-height: 1.55;
-        padding-left: 14px;
+        line-height: 1.5;
+        padding-left: 18px;
         position: relative;
+        white-space: normal;
+        overflow: visible;
+        text-overflow: unset;
+        word-break: break-word;
       }
 
       .feedback-list li::before {
@@ -447,6 +597,14 @@
       }
       .feedback-list li.improve::before {
         color: var(--improve);
+      }
+
+      .feedback-section-title {
+        font-size: 0.78rem;
+        margin-bottom: 10px;
+      }
+      .feedback-panel {
+        padding: 18px 20px;
       }
 
       .no-data {
@@ -572,16 +730,44 @@
             <div class="result-card-name">
               <div class="result-avatar">{{ initial }}</div>
               <div class="result-name-text">
-                <strong>{{ name }}</strong>
+                <strong style="display:inline-block; margin-right:8px">{{ name }}</strong>
+                {% if result.selection %}
+                  {% if result.selection == 'Shortlisted' %}
+                    <span class="status-badge status-shortlisted" style="margin-left:6px; padding:10px 18px; font-size:1rem">{{ result.selection }}</span>
+                  {% elif result.selection == 'Rejected' %}
+                    <span class="status-badge status-rejected" style="margin-left:6px; padding:10px 18px; font-size:1rem">{{ result.selection }}</span>
+                  {% else %}
+                    <span class="status-badge status-invalid" style="margin-left:6px; padding:10px 18px; font-size:1rem">{{ result.selection }}</span>
+                  {% endif %}
+                {% endif %}
                 {% if result.github_link and result.github_link != name %}
+                {% set repo_display = (result.repo_found if result.repo_found and result.repo_found != 'No' else result.github_link) %}
+                {% set repo_name = repo_display.split('/')[-1] if repo_display else '' %}
                 <a
                   href="{{ result.github_link }}"
                   target="_blank"
                   rel="noopener"
                 >
-                  <i class="fab fa-github" style="margin-right: 4px"></i>{{
-                  result.github_link }}
+                  <i class="fab fa-github" style="margin-right: 4px"></i>{{ repo_name }}
                 </a>
+                {% endif %}
+                {% if result.requirement_text %}
+                  {# Decide a single badge to show: Satisfied, Not satisfied, or Not Found #}
+                  {% set badge_class = '' %}
+                  {% set badge_text = '' %}
+                  {% if result.requirement_met is sameas true %}
+                    {% set badge_class = 'requirement-satisfied' %}
+                    {% set badge_text = 'Requirement: Satisfied' %}
+                  {% elif result.requirement_met is sameas false %}
+                    {% set badge_class = 'requirement-not-satisfied' %}
+                    {% set badge_text = 'Requirement: Not satisfied' %}
+                  {% else %}
+                    {% set badge_class = 'requirement-provided' %}
+                    {% set badge_text = 'Requirement: Not Found' %}
+                  {% endif %}
+                  <span class="requirement-badge {{ badge_class }}" style="margin-left:8px; white-space:normal; padding:8px 14px; font-size:0.82rem">
+                    {{ badge_text }}
+                  </span>
                 {% endif %}
               </div>
             </div>
@@ -714,9 +900,30 @@
           {% endif %} {% endif %}
 
           <!-- Feedback body -->
-          {% if result.feedback %}
+          {% if result.feedback or result.requirement_summary %}
           <div class="feedback-panel" style="padding: 24px">
-            {% if result.score_breakdown %}
+            {% if result.requirement_summary %}
+            <div
+              style="
+                margin-bottom: 16px;
+                padding: 14px 16px;
+                background: #f0f7ff;
+                border: 1px solid #d0e5ff;
+                border-radius: 10px;
+              "
+            >
+              <div style="font-weight: 700; color: #1d4ed8; margin-bottom: 8px">
+                <i class="fas fa-bullseye" style="margin-right: 6px"></i>
+                Requirement Summary
+              </div>
+              <p style="margin:0; color:#1f2937; line-height:1.6">
+                <strong>Requirement:</strong> {{ result.requirement_text }}<br />
+                <strong>Status:</strong> {{ result.requirement_status or 'Provided' }}<br />
+                {{ result.requirement_summary }}
+              </p>
+            </div>
+            {% endif %}
+            {% if result.selection != 'Invalid' and result.score_breakdown %}
             <div
               style="
                 margin-bottom: 16px;
@@ -740,6 +947,11 @@
                 {% endfor %}
               </ul>
               {# Final Rating Breakdown removed per user request #}
+            </div>
+            {% elif result.selection == 'Invalid' %}
+            <div style="margin-bottom:16px; padding:14px 16px; background:#fff5f5; border:1px solid #fee2e2; border-radius:10px; color:#7f1d1d; font-weight:600">
+              <i class="fas fa-exclamation-triangle" style="margin-right:8px"></i>
+              No analyzable content — cannot score this repository.
             </div>
             {% endif %}
             {% set feedback_lines = result.feedback.split('\n') %}
@@ -767,25 +979,8 @@
                 </div>
                 <ul class="feedback-list" style="margin-bottom: 18px">
               {% elif trimmed.upper().startswith('OVERALL RATING:') %}
-                </ul>
+                {# Overall rating display moved to the card header next to the name. Skip rendering here. #}
                 {% set ns.current_section = 'rating' %}
-                {% if result.overall_rating %}
-                  {% set score = result.overall_rating.split('/')[0]|float %}
-                  {% if score > 6 %}
-                    {% set label = 'Shortlisted' %}
-                    {% set bg = 'linear-gradient(135deg, #1a6b38, #3dbc5c)' %}
-                  {% else %}
-                    {% set label = 'Rejected' %}
-                    {% set bg = 'linear-gradient(135deg, #7b1e1e, #b91c1c)' %}
-                  {% endif %}
-                {% else %}
-                  {% set label = 'No Rating' %}
-                  {% set bg = '#9ca3af' %}
-                {% endif %}
-                <div style="margin-top: 12px; padding: 14px 20px; background: {{ bg }}; border-radius: 10px; display: inline-flex; align-items: center; gap: 10px;">
-                  <i class="fas fa-star" style="color: #fff; font-size: 1.1rem"></i>
-                  <span style="color: #fff; font-weight: 700; font-size: 1.05rem">{{ label }}</span>
-                </div>
               {% else %}
                 {% set clean = trimmed.lstrip('•-* ') %}
                 {% if clean and ns.current_section in ['positive', 'negative', 'improve'] %}

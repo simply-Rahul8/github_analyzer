@@ -17,13 +17,14 @@
         }
 
         :root {
-            --bg: #f5f7fa;
+            --bg: #fff6f5;
             --surface: #ffffff;
-            --border: #dde1e7;
-            --accent: #6c63ff;
-            --accent2: #00b894;
-            --text: #1a1d23;
-            --muted: #6c757d;
+            --border: #f6e9e7;
+            --accent: #00c2d4;
+            --accent2: #8B0000; /* bright maroon */
+            --accent-rgb: 0,194,212;
+            --text: #11161a;
+            --muted: #49545a;
         }
 
         body {
@@ -68,7 +69,7 @@
             left: 15%;
             right: 15%;
             height: 2px;
-            background: linear-gradient(90deg, transparent, #3dbc5c, #5b52e8, transparent);
+            background: linear-gradient(90deg, transparent, var(--accent2), var(--accent), transparent);
         }
 
         /* Animated scanner icon */
@@ -76,35 +77,39 @@
             width: 80px;
             height: 80px;
             border-radius: 50%;
-            background: rgba(61, 188, 92, 0.10);
-            border: 2px solid rgba(61, 188, 92, 0.3);
+            background: linear-gradient(135deg, rgba(var(--accent-rgb),0.06), rgba(255,255,255,0.02));
+            border: 2px solid rgba(var(--accent-rgb), 0.28);
             display: flex;
             align-items: center;
             justify-content: center;
             margin: 0 auto 30px;
             position: relative;
+            overflow: hidden;
         }
 
         .scan-icon i {
             font-size: 2rem;
-            color: #3dbc5c;
+            color: var(--accent);
         }
 
         .scan-icon::after {
             content: '';
             position: absolute;
-            inset: -8px;
+            inset: -12px;
             border-radius: 50%;
-            border: 2px solid transparent;
-            border-top-color: #3dbc5c;
-            border-right-color: #5b52e8;
-            animation: spin 1.2s linear infinite;
+            background: linear-gradient(120deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.22) 50%, rgba(255,255,255,0) 100%);
+            transform: skewX(-25deg);
+            background-size: 200% 100%;
+            box-shadow: 0 12px 36px rgba(var(--accent-rgb), 0.14);
+            animation: shiny 1.8s linear infinite;
         }
 
-        @keyframes spin {
-            to {
-                transform: rotate(360deg);
-            }
+        .scan-icon:hover { animation: jiggle 0.9s ease; }
+
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 0.98; }
+            50% { transform: scale(1.03); opacity: 0.9; }
+            100% { transform: scale(1); opacity: 0.98; }
         }
 
         h2 {
@@ -174,16 +179,16 @@
         }
 
         .log-stream .log-line.error {
-            color: #ff6b6b;
+            color: var(--accent2);
         }
 
         .error-box {
-            background: #fdecea;
-            border: 1px solid #f5b7b1;
+            background: rgba(var(--accent2-rgb), 0.06);
+            border: 1px solid rgba(var(--accent2-rgb), 0.12);
             border-radius: 10px;
             padding: 18px;
             margin-top: 20px;
-            color: #c0392b;
+            color: var(--accent2);
             font-size: 0.88rem;
         }
 

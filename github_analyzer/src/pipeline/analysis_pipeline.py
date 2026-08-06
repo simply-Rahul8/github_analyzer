@@ -52,9 +52,43 @@ class AnalysisPipeline:
         try:
             # 1. Fetch repo object
             _update("Connecting to GitHub and fetching repository...")
-            repo = self.github_connector.get_repo_by_url(github_url)
+            try:
+                repo = self.github_connector.get_repo_by_url(github_url)
+            except ValueError as e:
+                result["status"] = str(e)
+                deterministic_score, score_breakdown = compute_deterministic_score(
+                    repo_text="",
+                    file_paths=[],
+                    repo_metadata={},
+                    repo_accessible=False,
+                )
+                result.update({
+                    "deterministic_score": None,
+                    "score_breakdown": score_breakdown,
+                    "overall_rating": "Invalid",
+                    "rating_category": "Invalid",
+                    "rating_bands": rating_scale_text(),
+                    "selection": "Invalid",
+                })
+                logger.warning(f"Invalid GitHub URL for {github_url}: {e}")
+                return result
+
             if not repo:
-                result["status"] = "Repo Not Found"
+                deterministic_score, score_breakdown = compute_deterministic_score(
+                    repo_text="",
+                    file_paths=[],
+                    repo_metadata={},
+                    repo_accessible=False,
+                )
+                result.update({
+                    "status": "Repo Not Found",
+                    "deterministic_score": None,
+                    "score_breakdown": score_breakdown,
+                    "overall_rating": "Invalid",
+                    "rating_category": "Invalid",
+                    "rating_bands": rating_scale_text(),
+                    "selection": "Invalid",
+                })
                 logger.warning(f"Could not fetch repo for URL: {github_url}")
                 return result
 
@@ -72,13 +106,70 @@ class AnalysisPipeline:
             _update(f"Read {files_read} files. Running AI compression...")
 
             if not repo_text:
-                result["status"] = "No Analyzable Content"
+                # No analyzable content should be treated as inaccessible for
+                # deterministic scoring so the final score is 0 and not
+                # influenced by superficial metadata. For display we mark
+                # the overall rating as 'Invalid' rather than numeric 0.
+                deterministic_score, score_breakdown = compute_deterministic_score(
+                    repo_text=repo_text,
+                    file_paths=file_paths,
+                    repo_metadata=metadata,
+                    repo_accessible=False,
+                )
+                result.update({
+                    "status": "No Analyzable Content",
+                    "deterministic_score": None,
+                    "score_breakdown": score_breakdown,
+                    "overall_rating": "Invalid",
+                    "rating_category": "Invalid",
+                    "rating_bands": rating_scale_text(),
+                    "selection": "Invalid",
+                })
                 logger.warning(f"No content collected from {repo.full_name}")
                 return result
 
             # 3. Run LLM analysis
+            # Business-requirement pre-check (e.g., "inspect this repo for the HTML code for the login page")
+            requirement_info = {
+                "requirement_present": False,
+                "requirement_key": None,
+                "requirement_met": None,
+                "requirement_matches": [],
+            }
+
+            try:
+                if user_context and isinstance(user_context, str):
+                    lc = user_context.lower()
+                    # Simple trigger for login-page HTML inspection
+                    if "login" in lc and ("html" in lc or "page" in lc or "login page" in lc or "sign in" in lc or "signin" in lc):
+                        requirement_info["requirement_present"] = True
+                        requirement_info["requirement_key"] = "login_page_html"
+
+                        import re
+
+                        matches = []
+                        # look for candidate html files in file_paths
+                        for path in file_paths:
+                            if path.lower().endswith(('.html', '.htm')) or 'login' in path.lower():
+                                # extract snippet from repo_text for this path
+                                pattern = re.compile(r"\n={60}\n\[.*?\] " + re.escape(path) + r"\n={60}\n(.*?)(?=\n={60}\n\[|\Z)", re.S)
+                                m = pattern.search(repo_text)
+                                snippet = m.group(1) if m else ''
+                                s = snippet.lower()
+                                # naive heuristics: password input, form action with login, id/class containing login, or 'sign in' text
+                                if re.search(r"input[^>]+type=[\'\"]?password", s) or re.search(r"<form[^>]*(login|signin|sign-in|action=|/login)", s) or 'sign in' in s or 'login' in s:
+                                    matches.append(path)
+
+                        requirement_info["requirement_met"] = len(matches) > 0
+                        requirement_info["requirement_matches"] = matches
+            except Exception:
+                # don't fail the pipeline if requirement detection errors
+                requirement_info["requirement_present"] = False
+
             _update(f"Running AI evaluation for '{repo.full_name}'...")
-            analysis = self.llm_engine.analyze_repo(repo_text, user_context)
+            summary = self.llm_engine.compress_repo_content(repo_text)
+            requirement_validation = self.llm_engine.validate_requirement(summary, user_context)
+            analysis = self.llm_engine.analyze_repo(repo_text, user_context, summary=summary)
 
             # 4. Parse result
             _update("Parsing AI response and building report...")
@@ -97,9 +188,53 @@ class AnalysisPipeline:
             parsed["llm_overall_rating"] = parsed.get("overall_rating") or ""
             parsed["score_breakdown"] = score_breakdown
             parsed["deterministic_score"] = deterministic_score
-            parsed["overall_rating"] = f"{deterministic_score}/10"
-            parsed["rating_category"] = determine_rating_category(deterministic_score)
+            # Final overall rating must follow deterministic score. For normal
+            # repos we present the numeric score; if the repo lacks analyzable
+            # content we display an explicit 'Invalid' marker instead.
+            parsed_overall = f"{deterministic_score}/10" if deterministic_score is not None else "Invalid"
+            parsed["overall_rating"] = parsed_overall
+            parsed["rating_category"] = determine_rating_category(deterministic_score) if deterministic_score is not None else "Invalid"
             parsed["rating_bands"] = rating_scale_text()
+
+            # Attach requirement info (if any) to parsed results
+            parsed["requirement_text"] = user_context.strip() if user_context and isinstance(user_context, str) else ""
+            parsed["requirement_present"] = requirement_validation.get("requirement_present", False)
+            parsed["requirement_met"] = requirement_validation.get("requirement_met")
+            parsed["requirement_matches"] = requirement_validation.get("requirement_matches") or []
+            parsed["requirement_evidence"] = requirement_validation.get("requirement_evidence") or ""
+            parsed["requirement_summary"] = requirement_validation.get("requirement_summary") or ""
+
+            if parsed.get("requirement_text"):
+                if parsed.get("requirement_present"):
+                    if parsed.get("requirement_met") is True:
+                        parsed["requirement_status"] = "Satisfied"
+                    elif parsed.get("requirement_met") is False:
+                        parsed["requirement_status"] = "Not satisfied"
+                    else:
+                        parsed["requirement_status"] = "Provided"
+                else:
+                    parsed["requirement_status"] = "Provided"
+            else:
+                parsed["requirement_status"] = ""
+
+            if parsed.get("requirement_text") and parsed.get("requirement_met") is False:
+                parsed_break = parsed.get("score_breakdown") or []
+                parsed_break.append(("Business Requirement", 0, "Repository did not satisfy the provided business requirement."))
+                parsed["score_breakdown"] = parsed_break
+                parsed["selection"] = "Rejected"
+                prev_feedback = parsed.get("feedback") or ""
+                note = "NEGATIVE: Business requirement not satisfied."
+                parsed["feedback"] = note + "\n\n" + prev_feedback
+
+            # Selection label next to the student's name
+            if isinstance(deterministic_score, (int, float)):
+                try:
+                    score_val = float(deterministic_score)
+                    parsed["selection"] = "Shortlisted" if score_val > 6 else "Rejected"
+                except Exception:
+                    parsed["selection"] = "No Rating"
+            else:
+                parsed["selection"] = "Invalid"
 
             result.update(parsed)
             result["status"] = "Success"
