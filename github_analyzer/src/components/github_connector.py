@@ -1,5 +1,6 @@
 from github import Github, GithubException
 import time
+import re
 from src.constants import Config
 from src.logger.logging_config import setup_logging
 
@@ -105,7 +106,7 @@ class GitHubConnector:
     def get_repo_by_url(self, github_url):
         """
         Fetches a GitHub repository object directly from a full URL.
-        Supports: https://github.com/user/repo or github.com/user/repo
+        Supports: https://github.com/user/repo, github.com/user/repo, or user/repo.
         """
         self._check_rate_limit()
         try:
@@ -116,15 +117,21 @@ class GitHubConnector:
                     break
 
             parts = url.split('/')
-            if len(parts) < 3 or 'github.com' not in parts[0]:
-                raise ValueError(f"Invalid GitHub URL: {github_url}")
+            if len(parts) < 3 or parts[0].lower() != 'github.com':
+                raise ValueError(f"Invalid GitHub repository URL: {github_url}")
 
             username = parts[1]
             repo_name = parts[2]
             # Strip .git suffix if present (e.g. https://github.com/user/repo.git)
             if repo_name.endswith('.git'):
                 repo_name = repo_name[:-4]
+
+            if not username or not repo_name:
+                raise ValueError(f"Invalid GitHub repository URL: {github_url}")
+
             return self.g.get_repo(f"{username}/{repo_name}")
+        except ValueError:
+            raise
         except GithubException as e:
             logger.error(f"GitHub Error for URL {github_url}: {e}")
             return None
@@ -206,6 +213,7 @@ class GitHubConnector:
         source_items   = []
         config_items   = []
 
+        other_items = []
         for element in tree.tree:
             if element.type != "blob":
                 continue
@@ -237,6 +245,9 @@ class GitHubConnector:
                 or fname_lower in ANALYZABLE_NAMES
             )
             if not analyzable:
+                # Collect files with no extension for lightweight header checks
+                if ext == '':
+                    other_items.append(element)
                 continue
 
             # Bucket by priority
@@ -255,8 +266,32 @@ class GitHubConnector:
             else:
                 config_items.append(element)
 
-        # ── 3. Read content in priority order, up to MAX_FILES_TOTAL ────
-        priority_queue = readme_items + notebook_items + source_items + config_items
+        # ── 3. Lightweight header checks for files without extensions
+        # Only a limited number of header checks are performed to avoid
+        # excessive API calls. If a file contains a shebang or interpreter
+        # hints (python/node/bash), treat it as a script candidate.
+        script_candidates = []
+        header_check_limit = 50
+        header_checks = 0
+        for element in other_items:
+            if header_checks >= header_check_limit:
+                break
+            try:
+                content_file = repo.get_contents(element.path)
+                raw_header = content_file.decoded_content.decode('utf-8', errors='replace')[:400].lower()
+                # Detect shebang or common interpreter mentions
+                if re.search(r"^\s*#!", raw_header) or (
+                    'python' in raw_header[:200] or 'node' in raw_header[:200] or 'bash' in raw_header[:200]
+                ):
+                    script_candidates.append(element)
+                header_checks += 1
+            except Exception:
+                # ignore read failures for header checks
+                continue
+
+        # ── 4. Read content in priority order, up to MAX_FILES_TOTAL ────
+        # Insert detected scripts after source files so they are inspected.
+        priority_queue = readme_items + notebook_items + source_items + script_candidates + config_items
 
         collected    = []
         total_chars  = 0

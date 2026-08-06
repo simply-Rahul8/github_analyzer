@@ -32,8 +32,18 @@ class DataIngestion:
                                f"Expected columns containing student names and GitHub URLs.")
 
             # Extract only the required columns and rename them
-            df_clean = df[[name_col, github_col]].copy()
-            df_clean.columns = ['name of the student', 'github link']
+            if name_col and github_col:
+                df_clean = df[[name_col, github_col]].copy()
+                df_clean.columns = ['name of the student', 'github link']
+            elif github_col:
+                df_clean = df[[github_col]].copy()
+                df_clean.columns = ['github link']
+                df_clean['name of the student'] = [f"Student {i+1}" for i in range(len(df_clean))]
+            else:
+                raise ValueError(
+                    "Could not detect a GitHub URL column. Please upload a file with one column of GitHub repo links "
+                    "or one column of names plus one column of GitHub repo links."
+                )
 
             # Remove rows with missing values in either column
             df_clean = df_clean.dropna(subset=['name of the student', 'github link'])
@@ -90,8 +100,18 @@ class DataIngestion:
 
         # Possible GitHub column patterns
         github_patterns = [
-            r'.*github.*', r'.*repo.*', r'.*link.*', r'.*url.*',
-            r'.*profile.*', r'.*account.*', r'git.*link'
+            r'.*github.*',
+            r'.*github[-_\s]*url.*',
+            r'.*github[-_\s]*link.*',
+            r'.*githubusercontent.*',
+            r'.*git.*url.*',
+            r'.*git.*link.*',
+            r'.*url.*github.*',
+            r'.*link.*github.*',
+            r'.*url.*',
+            r'.*link.*',
+            r'.*profile.*',
+            r'.*account.*',
         ]
 
         name_col = None
@@ -114,6 +134,13 @@ class DataIngestion:
                     break
             if github_col:
                 break
+
+        # If GitHub column still looks wrong, use content-based fallback only
+        if github_col == 'repository' and not any(
+            re.search(r'github\.com', str(val), re.IGNORECASE)
+            for val in df[github_col].dropna().head(10)
+        ):
+            github_col = None
 
         # If pattern matching fails, try content-based detection
         if not name_col:
