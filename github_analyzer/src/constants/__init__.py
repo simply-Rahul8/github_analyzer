@@ -25,9 +25,11 @@ class Config:
     # Repository search keywords (used only in legacy batch mode)
     REPO_KEYWORDS = []
 
-    # API keys
+    # API keys and models
     GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
     GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+    GROQ_MODEL = os.getenv("GROQ_MODEL", "qwen/qwen3.8-27b")
+    GROQ_FAST_MODEL = os.getenv("GROQ_FAST_MODEL", "qwen/qwen3.8-27b")
 
     # File paths
     INPUT_FILE  = "Students list.xlsx"

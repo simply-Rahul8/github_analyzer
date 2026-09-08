@@ -57,7 +57,7 @@ class LLMEngine:
                         {"role": "system", "content": "You are a precise evaluator who answers with structured output."},
                         {"role": "user", "content": prompt},
                     ],
-                    model="llama-3.3-70b-versatile",
+                    model=Config.GROQ_MODEL,
                     temperature=0.0,
                 )
                 response_text = chat_completion.choices[0].message.content.strip()
@@ -119,6 +119,7 @@ class LLMEngine:
             raise ValueError("GROQ_API_KEY not found in configuration")
         time.sleep(4)  # Throttle
 
+        content_sample = repo_content[:18000] if len(repo_content) > 18000 else repo_content
         retries = 3
         for attempt in range(retries):
             try:
@@ -135,11 +136,11 @@ class LLMEngine:
                             "role": "user",
                             "content": (
                                 f"{COMPRESSION_PROMPT}\n\n"
-                                f"Repository content:\n\n{repo_content}"
+                                f"Repository content:\n\n{content_sample}"
                             ),
                         }
                     ],
-                    model="llama-3.1-8b-instant",
+                    model=Config.GROQ_FAST_MODEL,
                     temperature=0.3,
                     max_tokens=800,      # raised from 500 for richer summaries
                 )
@@ -189,7 +190,7 @@ class LLMEngine:
                             "content": f"Here is the repository summary:\n\n{summary}",
                         }
                     ],
-                    model="llama-3.3-70b-versatile",
+                    model=Config.GROQ_MODEL,
                     temperature=0.1,
                 )
                 return chat_completion.choices[0].message.content
